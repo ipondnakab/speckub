@@ -1,0 +1,42 @@
+name: Publish npm packages
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type publish-0.1.0 to publish; otherwise run a dry-run'
+        required: true
+        default: dry-run
+permissions:
+  contents: read
+  id-token: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    environment: npm-release
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: https://registry.npmjs.org
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint && pnpm typecheck && pnpm test && pnpm build
+      - name: Inspect package archives
+        run: |
+          mkdir -p /tmp/speckub-packs
+          pnpm --filter @speckub/schema pack --pack-destination /tmp/speckub-packs
+          pnpm --filter @speckub/core pack --pack-destination /tmp/speckub-packs
+          pnpm --filter @speckub/cli pack --pack-destination /tmp/speckub-packs
+          tar -tzf /tmp/speckub-packs/speckub-cli-0.1.0.tgz | grep 'package/templates/AGENTS.md'
+      - name: Publish schema, core, then CLI
+        if: inputs.confirm == 'publish-0.1.0'
+        run: |
+          pnpm --filter @speckub/schema publish --access public --provenance --no-git-checks
+          pnpm --filter @speckub/core publish --access public --provenance --no-git-checks
+          pnpm --filter @speckub/cli publish --access public --provenance --no-git-checks
