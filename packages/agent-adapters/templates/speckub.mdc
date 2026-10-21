@@ -1,0 +1,5 @@
+---
+description: SpecKub API specification guidance
+alwaysApply: false
+---
+When documenting APIs, inspect implementation source and produce SpecKub Markdown specifications. Include source references, avoid unsupported claims, and preserve human edits.
