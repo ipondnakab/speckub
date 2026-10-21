@@ -28,12 +28,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint && pnpm typecheck && pnpm test && pnpm build
       - name: Inspect package archives
-        run: |
-          mkdir -p /tmp/speckub-packs
-          pnpm --filter @speckub/schema pack --pack-destination /tmp/speckub-packs
-          pnpm --filter @speckub/core pack --pack-destination /tmp/speckub-packs
-          pnpm --filter @speckub/cli pack --pack-destination /tmp/speckub-packs
-          tar -tzf /tmp/speckub-packs/speckub-cli-0.1.0.tgz | grep 'package/templates/AGENTS.md'
+        run: bash .github/scripts/verify-packages.sh
       - name: Publish schema, core, then CLI
         if: inputs.confirm == 'publish-0.1.0'
         run: |
