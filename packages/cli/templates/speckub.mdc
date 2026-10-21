@@ -1,0 +1,15 @@
+---
+description: Keep Git-backed SpecKub API documentation aligned with endpoint changes
+globs:
+  - "**/docs/api/**/*.md"
+  - "**/*Controller*"
+  - "**/*route*"
+alwaysApply: false
+---
+# SpecKub API documentation
+
+For endpoint work, first discover the stable ID with `speckub list`, inspect it with `speckub inspect <endpoint-id>`, then update the associated Markdown specification under `docs/api/`.
+
+Use YAML frontmatter contract v1: `specVersion: 1`, `id`, `kind: http`, `method`, `path`, `summary`, and optional repository-relative `source` paths.
+
+Run `speckub validate --id <endpoint-id>` and application tests. Do not treat deterministic validation as proof of semantic alignment; the semantic check is skipped.
