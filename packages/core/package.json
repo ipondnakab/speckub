@@ -13,7 +13,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@speckub/schema": "^0.1.0"
+    "@speckub/schema": "workspace:^"
   },
   "devDependencies": {
     "@types/node": "^22.15.0",
