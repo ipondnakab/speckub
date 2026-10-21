@@ -50,3 +50,31 @@ npm requires a successful first OIDC publish within two days of configuring each
 **Do not attempt to republish version 0.1.0.** npm versions are immutable once published. Bump all package versions, update the lockfile and confirmation gate, and run a new dry-run before a subsequent OIDC release.
 
 Reference: https://docs.npmjs.com/trusted-publishers/
+
+## First release: preflight (safe; does not publish)
+
+Run on a trusted local computer with Node.js 22 and pnpm 9, from a fresh clone of `main` **after** the release-readiness PR is merged:
+
+```sh
+node --version
+npm --version
+npm whoami
+npm org ls speckub
+git status --short
+pnpm install --frozen-lockfile
+pnpm lint && pnpm typecheck && pnpm test && pnpm build
+bash .github/scripts/verify-packages.sh
+npm view @speckub/schema@0.1.0 version
+npm view @speckub/core@0.1.0 version
+npm view @speckub/cli@0.1.0 version
+```
+
+The `npm view` commands are **read-only**. A 404 for a new package/version is expected; any existing version must be investigated before release. Confirm the tarballs contain no secrets or unintended files and the CLI starts correctly when installed from the tarball. The `npm org ls` command verifies team membership, not necessarily publish rights; check your owner/team permissions in the npm website.
+
+**STOP after the preflight.** Record the three tarball names, test results and scope permissions, then obtain explicit approval before any `npm publish` action. Do not store npm tokens in GitHub or share credentials in chat.
+
+### Manual first-publication handoff (do not run during preflight)
+
+Once the owner explicitly authorizes a real public release, use an authenticated npm CLI session with 2FA to publish the three *inspected tarballs*, in dependency order (schema → core → CLI), from a trusted local machine. Do not rely on the GitHub OIDC workflow for brand-new packages without first verifying that npm supports the chosen bootstrap path. Verify each package on the registry after publication and never attempt to reuse an already-published version.
+
+**Release gate:** The workflow confirmation string is not a substitute for human approval. Keep `npm-release` protected with required reviewers before enabling the workflow's publish path.
