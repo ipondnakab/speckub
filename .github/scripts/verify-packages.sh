@@ -13,8 +13,9 @@ done
 for package in schema core cli; do
   archive="packages/$package/speckub-$package-0.1.0.tgz"
   test -f "$archive"
-  tar -tzf "$archive" | grep -Fxq 'package/package.json'
-  tar -tzf "$archive" | grep -Fxq 'package/dist/index.js' || {
+  contents=$(tar -tzf "$archive")
+  grep -Fxq 'package/package.json' <<< "$contents"
+  grep -Fxq 'package/dist/index.js' <<< "$contents" || {
     if [[ "$package" != "cli" ]]; then
       echo "Missing entrypoint in $archive" >&2
       exit 1
@@ -23,10 +24,11 @@ for package in schema core cli; do
 done
 
 cli_archive="packages/cli/speckub-cli-0.1.0.tgz"
-tar -tzf "$cli_archive" | grep -Fxq 'package/dist/bin.js'
-tar -tzf "$cli_archive" | grep -Fxq 'package/dist/init.js'
+cli_contents=$(tar -tzf "$cli_archive")
+grep -Fxq 'package/dist/bin.js' <<< "$cli_contents"
+grep -Fxq 'package/dist/init.js' <<< "$cli_contents"
 for template in AGENTS.md CLAUDE.md speckub.mdc; do
-  tar -tzf "$cli_archive" | grep -Fxq "package/templates/$template"
+  grep -Fxq "package/templates/$template" <<< "$cli_contents"
 done
 
 echo "All SpecKub package archives passed inspection."
