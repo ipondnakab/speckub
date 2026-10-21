@@ -4,31 +4,20 @@ on:
   push:
     branches: [main]
 permissions:
-  contents: write
+  contents: read
 jobs:
   checks:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref || github.ref_name }}
       - uses: pnpm/action-setup@v4
         with:
           version: 9.15.9
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: pnpm install --no-frozen-lockfile
-      - name: Commit updated lockfile
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add pnpm-lock.yaml
-          if ! git diff --cached --quiet; then
-            git commit -m "chore: update CLI workspace lockfile"
-            git push origin HEAD:${{ github.head_ref }}
-          fi
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
