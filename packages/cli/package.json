@@ -6,14 +6,13 @@
     "speckub": "./dist/bin.js"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json && node scripts/copy-templates.mjs",
+    "build": "tsc -p tsconfig.json",
     "lint": "eslint src",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "vitest run",
-    "prepack": "pnpm build"
+    "test": "vitest run"
   },
   "dependencies": {
-    "@speckub/core": "^0.1.0"
+    "@speckub/core": "workspace:^"
   },
   "devDependencies": {
     "@types/node": "^22.15.0",
@@ -27,6 +26,7 @@
   },
   "files": [
     "dist",
+    "templates",
     "README.md"
   ],
   "publishConfig": {
