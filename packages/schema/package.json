@@ -32,5 +32,14 @@
   ],
   "publishConfig": {
     "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ipondnakab/speckub.git",
+    "directory": "packages/schema"
+  },
+  "homepage": "https://github.com/ipondnakab/speckub",
+  "bugs": {
+    "url": "https://github.com/ipondnakab/speckub/issues"
   }
 }
