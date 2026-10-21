@@ -46,13 +46,12 @@ export async function initProject(
   await ensureSafePath(root, docs);
   const created: string[] = [];
   const skipped: string[] = [];
-  try {
-    await mkdir(docs, { recursive: true });
-    created.push(relative(root, docs).split(sep).join('/') + '/');
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
-    skipped.push(relative(root, docs).split(sep).join('/') + '/');
-  }
+  const docsAlreadyExists = await stat(docs).then((value) => value.isDirectory()).catch((error: NodeJS.ErrnoException) => {
+    if (error.code === 'ENOENT') return false;
+    throw error;
+  });
+  await mkdir(docs, { recursive: true });
+  (docsAlreadyExists ? skipped : created).push(relative(root, docs).split(sep).join('/') + '/');
 
   const templateRoot = fileURLToPath(new URL('../../agent-adapters/templates/', import.meta.url));
   for (const agent of [...new Set(agents)]) {
