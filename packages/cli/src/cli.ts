@@ -1,3 +1,4 @@
+import { initProject, type Agent } from './init.js';
 import { discoverEndpoints, validateEndpoint } from '@speckub/core';
 
 export interface CliIO {
@@ -7,6 +8,7 @@ export interface CliIO {
 
 const usage = `SpecKub CLI
 Usage:
+  speckub init [--root DIR] [--docs-dir DIR] [--agent codex|claude|cursor|all] [--json]
   speckub list [--root DIR] [--docs-dir DIR] [--json]
   speckub inspect ID [--root DIR] [--docs-dir DIR] [--json]
   speckub validate --id ID [--root DIR] [--docs-dir DIR] [--json]
@@ -19,15 +21,21 @@ type Options = {
   root: string;
   docsDir: string;
   json: boolean;
+  agents: Agent[];
 };
 
 function parseArgs(args: string[], cwd: string): Options {
   const [command = '--help', ...rest] = args;
-  const options: Options = { command, root: cwd, docsDir: 'docs/api', json: false };
+  const options: Options = { command, root: cwd, docsDir: 'docs/api', json: false, agents: [] };
   let positional: string | undefined;
   for (let i = 0; i < rest.length; i++) {
     const argument = rest[i];
     if (argument === '--json') options.json = true;
+    else if (argument === '--agent') {
+      const value = rest[++i];
+      if (!value || !['codex', 'claude', 'cursor', 'all'].includes(value)) throw new Error('Expected --agent codex|claude|cursor|all');
+      options.agents.push(...(value === 'all' ? ['codex', 'claude', 'cursor'] as Agent[] : [value as Agent]));
+    }
     else if (argument === '--id' || argument === '--root' || argument === '--docs-dir') {
       const value = rest[++i];
       if (!value || value.startsWith('--')) throw new Error(`Missing value for ${argument}`);
@@ -58,7 +66,7 @@ export async function runCli(args: string[], io: CliIO, cwd = process.cwd()): Pr
     io.stdout(usage);
     return 0;
   }
-  if (!['list', 'inspect', 'validate'].includes(options.command)) {
+  if (!['init', 'list', 'inspect', 'validate'].includes(options.command)) {
     io.stderr(`Unknown command: ${options.command}`);
     io.stderr(usage);
     return 2;
@@ -68,12 +76,26 @@ export async function runCli(args: string[], io: CliIO, cwd = process.cwd()): Pr
     io.stderr(usage);
     return 2;
   }
+  if (options.command !== 'init' && options.agents.length) {
+    io.stderr('--agent is only supported by init');
+    return 2;
+  }
   if (options.command === 'list' && options.id) {
     io.stderr('The list command does not accept --id');
     return 2;
   }
 
   try {
+    if (options.command === 'init') {
+      if (options.id) { io.stderr('init does not accept --id'); return 2; }
+      const result = await initProject(options.root, options.docsDir, options.agents);
+      if (options.json) io.stdout(JSON.stringify(result, null, 2));
+      else {
+        for (const file of result.created) io.stdout(`CREATED ${file}`);
+        for (const file of result.skipped) io.stdout(`SKIPPED ${file} (already exists)`);
+      }
+      return 0;
+    }
     if (options.command === 'validate') {
       const report = await validateEndpoint(options.root, options.id!, options.docsDir);
       if (options.json) io.stdout(JSON.stringify(report, null, 2));
