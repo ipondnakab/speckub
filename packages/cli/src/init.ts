@@ -53,7 +53,7 @@ export async function initProject(
   await mkdir(docs, { recursive: true });
   (docsAlreadyExists ? skipped : created).push(relative(root, docs).split(sep).join('/') + '/');
 
-  const templateRoot = fileURLToPath(new URL('../../agent-adapters/templates/', import.meta.url));
+  const templateRoot = fileURLToPath(new URL('../templates/', import.meta.url));
   for (const agent of [...new Set(agents)]) {
     const template = templates[agent];
     if (!template) throw new Error(`Unsupported agent: ${agent}`);
