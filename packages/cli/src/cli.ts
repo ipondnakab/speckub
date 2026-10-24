@@ -1,4 +1,5 @@
 import { initProject, type Agent } from './init.js';
+import { prepareScan } from './scan.js';
 import { discoverEndpoints, validateEndpoint } from '@speckub/core';
 
 export interface CliIO {
@@ -9,6 +10,7 @@ export interface CliIO {
 const usage = `SpecKub CLI
 Usage:
   speckub init [--root DIR] [--docs-dir DIR] [--agent codex|claude|cursor|all] [--json]
+  speckub scan [--root DIR] [--docs-dir DIR] [--dry-run] [--json]
   speckub list [--root DIR] [--docs-dir DIR] [--json]
   speckub inspect ID [--root DIR] [--docs-dir DIR] [--json]
   speckub validate --id ID [--root DIR] [--docs-dir DIR] [--json]
@@ -22,15 +24,17 @@ type Options = {
   docsDir: string;
   json: boolean;
   agents: Agent[];
+  dryRun: boolean;
 };
 
 function parseArgs(args: string[], cwd: string): Options {
   const [command = '--help', ...rest] = args;
-  const options: Options = { command, root: cwd, docsDir: 'docs/api', json: false, agents: [] };
+  const options: Options = { command, root: cwd, docsDir: 'docs/api', json: false, agents: [], dryRun: false };
   let positional: string | undefined;
   for (let i = 0; i < rest.length; i++) {
     const argument = rest[i];
     if (argument === '--json') options.json = true;
+    else if (argument === '--dry-run') options.dryRun = true;
     else if (argument === '--agent') {
       const value = rest[++i];
       if (!value || !['codex', 'claude', 'cursor', 'all'].includes(value)) throw new Error('Expected --agent codex|claude|cursor|all');
@@ -66,7 +70,7 @@ export async function runCli(args: string[], io: CliIO, cwd = process.cwd()): Pr
     io.stdout(usage);
     return 0;
   }
-  if (!['init', 'list', 'inspect', 'validate'].includes(options.command)) {
+  if (!['init', 'scan', 'list', 'inspect', 'validate'].includes(options.command)) {
     io.stderr(`Unknown command: ${options.command}`);
     io.stderr(usage);
     return 2;
@@ -80,12 +84,28 @@ export async function runCli(args: string[], io: CliIO, cwd = process.cwd()): Pr
     io.stderr('--agent is only supported by init');
     return 2;
   }
+  if (options.dryRun && options.command !== 'scan') {
+    io.stderr('--dry-run is only supported by scan');
+    return 2;
+  }
   if (options.command === 'list' && options.id) {
     io.stderr('The list command does not accept --id');
     return 2;
   }
 
   try {
+    if (options.command === 'scan') {
+      if (options.id) { io.stderr('scan does not accept --id'); return 2; }
+      const result = await prepareScan(options.root, options.docsDir, options.dryRun);
+      if (options.json) io.stdout(JSON.stringify(result, null, 2));
+      else {
+        for (const skill of result.skills) io.stdout(`${skill.status.toUpperCase()} ${skill.path}`);
+        io.stdout('API scanning runs in your coding agent, not in this terminal command.');
+        io.stdout('Send this prompt to your agent:');
+        io.stdout(result.prompt);
+      }
+      return 0;
+    }
     if (options.command === 'init') {
       if (options.id) { io.stderr('init does not accept --id'); return 2; }
       const result = await initProject(options.root, options.docsDir, options.agents);
