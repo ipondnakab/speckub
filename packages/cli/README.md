@@ -155,7 +155,7 @@ yarn speckub list --root portfolio-api
 yarn speckub validate --root portfolio-api --id <endpoint-id>
 ```
 
-The [nested-project guide](https://github.com/ipondnakab/speckub/blob/main/docs/user-story.md#nested-api-project)
+The [nested-project guide](https://github.com/ipondnakab/speckub/blob/c16ca5f2792623bcf0d667a22aa965dc2b4c2e78/docs/user-story.md#nested-api-project)
 explains the complete workflow and fallback invocation.
 
 ## Standalone web reader
@@ -203,12 +203,12 @@ diagram/layout types. Export tests do not prove browser rendering or API behavio
 
 ## Guides and examples
 
-- [Project and user-story guide](https://github.com/ipondnakab/speckub/blob/main/docs/user-story.md)
-- [Agent integrations](https://github.com/ipondnakab/speckub/blob/main/packages/agent-adapters/README.md)
-- [API document standard](https://github.com/ipondnakab/speckub/blob/main/packages/cli/templates/skills/speckub-create/references/api-document.md)
-- [Sequence diagram guidance](https://github.com/ipondnakab/speckub/blob/main/packages/cli/templates/skills/speckub-create/references/sequence-diagrams.md)
-- [Runnable API playground](https://github.com/ipondnakab/speckub/tree/main/examples/node-api)
-- [Release guide](https://github.com/ipondnakab/speckub/blob/main/docs/npm-release.md)
+- [Project and user-story guide](https://github.com/ipondnakab/speckub/blob/c16ca5f2792623bcf0d667a22aa965dc2b4c2e78/docs/user-story.md)
+- [Agent integrations](https://github.com/ipondnakab/speckub/blob/c16ca5f2792623bcf0d667a22aa965dc2b4c2e78/packages/agent-adapters/README.md)
+- [API document standard](https://github.com/ipondnakab/speckub/blob/c16ca5f2792623bcf0d667a22aa965dc2b4c2e78/packages/cli/templates/skills/speckub-create/references/api-document.md)
+- [Sequence diagram guidance](https://github.com/ipondnakab/speckub/blob/c16ca5f2792623bcf0d667a22aa965dc2b4c2e78/packages/cli/templates/skills/speckub-create/references/sequence-diagrams.md)
+- [Runnable API playground](https://github.com/ipondnakab/speckub/tree/c16ca5f2792623bcf0d667a22aa965dc2b4c2e78/examples/node-api)
+- [Release guide](https://github.com/ipondnakab/speckub/blob/c16ca5f2792623bcf0d667a22aa965dc2b4c2e78/docs/npm-release.md)
 
 ## License
 
