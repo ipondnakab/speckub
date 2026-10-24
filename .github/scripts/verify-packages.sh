@@ -11,7 +11,7 @@ for package in schema core cli; do
 done
 
 for package in schema core cli; do
-  archive="packages/$package/speckub-$package-0.1.1.tgz"
+  archive="packages/$package/speckub-$package-0.1.2.tgz"
   test -f "$archive"
   contents=$(tar -tzf "$archive")
   grep -Fxq 'package/package.json' <<< "$contents"
@@ -23,11 +23,15 @@ for package in schema core cli; do
   }
 done
 
-cli_archive="packages/cli/speckub-cli-0.1.1.tgz"
+cli_archive="packages/cli/speckub-cli-0.1.2.tgz"
 cli_contents=$(tar -tzf "$cli_archive")
 grep -Fxq 'package/dist/bin.js' <<< "$cli_contents"
 grep -Fxq 'package/dist/init.js' <<< "$cli_contents"
 grep -Fxq 'package/dist/scan.js' <<< "$cli_contents"
+grep -Fxq 'package/dist/ui.js' <<< "$cli_contents"
+for asset in index.html reader.js styles.css NOTICE.txt; do
+  grep -Fxq "package/templates/reader/$asset" <<< "$cli_contents"
+done
 for skill in scan relations create validate clarify template; do
   grep -Fxq "package/templates/skills/speckub-$skill/SKILL.md" <<< "$cli_contents"
 done

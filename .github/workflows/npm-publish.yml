@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       confirm:
-        description: 'Type publish-0.1.1 to publish; otherwise run a dry-run'
+        description: 'Type publish-0.1.2 to publish; otherwise run a dry-run'
         required: true
         default: dry-run
 permissions:
@@ -32,8 +32,8 @@ jobs:
       - name: Inspect package archives
         run: bash .github/scripts/verify-packages.sh
       - name: Publish schema, core, then CLI
-        if: inputs.confirm == 'publish-0.1.1'
+        if: inputs.confirm == 'publish-0.1.2'
         run: |
-          npm publish packages/schema/speckub-schema-0.1.1.tgz --access public
-          npm publish packages/core/speckub-core-0.1.1.tgz --access public
-          npm publish packages/cli/speckub-cli-0.1.1.tgz --access public
+          npm publish packages/schema/speckub-schema-0.1.2.tgz --access public
+          npm publish packages/core/speckub-core-0.1.2.tgz --access public
+          npm publish packages/cli/speckub-cli-0.1.2.tgz --access public

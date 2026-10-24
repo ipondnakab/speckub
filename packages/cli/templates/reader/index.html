@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src data:; font-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'none'"
+    />
+    <title>SpecKub · API reference</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="mermaid.min.js" defer></script>
+    <script src="reader.js" defer></script>
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar" aria-label="API navigation">
+        <a class="brand" href="#"
+          ><span class="brand-mark">S</span>SpecKub<span class="edition"
+            >REFERENCE</span
+          ></a
+        >
+        <div class="workspace">
+          <span class="workspace-dot"></span
+          ><span id="project-name">API workspace</span>
+        </div>
+        <label class="search-label" for="search">Find an endpoint</label>
+        <input
+          id="search"
+          type="search"
+          placeholder="Search route, ID, or content…"
+          autocomplete="off"
+        />
+        <label class="search-label" for="method">HTTP method</label>
+        <select id="method">
+          <option value="">All methods</option>
+        </select>
+        <div class="nav-heading">
+          <span>ENDPOINTS</span
+          ><span id="result-count" aria-live="polite"></span>
+        </div>
+        <nav id="endpoints" aria-label="Endpoints"></nav>
+        <p id="no-results" hidden>
+          No matching endpoints. Try a different search.
+        </p>
+        <footer class="sidebar-footer">
+          Your code. Your specs.<br /><span
+            >Generated locally · No external assets</span
+          >
+        </footer>
+      </aside>
+      <main id="main">
+        <header class="topbar">
+          <span>Documentation <span class="crumb">/ API reference</span></span
+          ><span class="snapshot">Static snapshot</span>
+        </header>
+        <div class="intro">
+          <div class="eyebrow">THE CONTRACT, IN CONTEXT</div>
+          <h1>API reference</h1>
+          <p>
+            Explore endpoints, understand their behavior, and follow the request
+            flow.
+          </p>
+          <div class="summary">
+            <span><strong id="total">0</strong> endpoints</span
+            ><span><strong id="diagram-count">0</strong> diagrams</span
+            ><span class="local-label">Local export</span>
+          </div>
+        </div>
+        <section
+          id="detail"
+          aria-live="polite"
+          aria-label="Selected endpoint"
+        ></section>
+      </main>
+      <aside class="on-page" aria-label="On this page">
+        <div class="toc-label">ON THIS PAGE</div>
+        <nav id="toc"></nav>
+        <div class="reader-note">
+          A source-derived specification is a contract to review. It does not
+          prove runtime behavior.
+        </div>
+      </aside>
+    </div>
+    <script id="spec-data" type="application/json">
+      __SPECKUB_DATA__
+    </script>
+  </body>
+</html>

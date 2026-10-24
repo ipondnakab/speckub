@@ -54,3 +54,16 @@ node packages/cli/dist/bin.js validate --id missing.endpoint --root examples/nod
 
 Expect `ENDPOINT_NOT_FOUND` and exit code 1. Running `validate` without an ID
 returns exit code 2 for a usage error.
+
+## Read the specs in a website
+
+From the SpecKub repository root after building the checkout:
+
+```sh
+node packages/cli/dist/bin.js ui --root examples/node-api --serve
+```
+
+Open `http://127.0.0.1:4173`. The reader has endpoint navigation, search, method
+filters, detailed tables, and sequence diagrams. It does not need the example API
+server to be running. Stop preview with Ctrl+C. The static files remain in
+`examples/node-api/.speckub/site/`; no hosting or publication happens automatically.
