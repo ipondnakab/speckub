@@ -1,4 +1,4 @@
-import { mkdir, readFile, realpath, stat, writeFile } from 'node:fs/promises';
+import { lstat, mkdir, readFile, realpath, stat, writeFile } from 'node:fs/promises';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -19,7 +19,7 @@ function within(root: string, target: string): boolean {
   return path === '' || (path !== '..' && !path.startsWith('..' + sep) && !isAbsolute(path));
 }
 
-async function ensureSafePath(root: string, destination: string): Promise<void> {
+export async function ensureSafePath(root: string, destination: string): Promise<void> {
   if (!within(root, destination)) throw new Error('Target escapes project root');
   let cursor = dirname(destination);
   while (within(root, cursor)) {
@@ -33,6 +33,69 @@ async function ensureSafePath(root: string, destination: string): Promise<void> 
     if (cursor === root) break;
     cursor = dirname(cursor);
   }
+}
+
+export const workflowSkills = ['scan', 'relations', 'create', 'validate', 'clarify', 'template'] as const;
+export type InstalledSkill = { path: string; status: 'created' | 'skipped' | 'would-create' };
+
+async function installFile(root: string, path: string, content: string, dryRun: boolean): Promise<InstalledSkill> {
+  const target = join(root, path);
+  await ensureSafePath(root, target);
+  try {
+    const info = await lstat(target);
+    if (!info.isFile()) throw new Error(`Installation target is not a regular file: ${path}`);
+    return { path, status: 'skipped' };
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+  }
+  if (dryRun) return { path, status: 'would-create' };
+  await mkdir(dirname(target), { recursive: true });
+  try {
+    await writeFile(target, content, { flag: 'wx' });
+    return { path, status: 'created' };
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
+    return { path, status: 'skipped' };
+  }
+}
+
+export async function installWorkflowSkills(rootDir: string, dryRun = false, agents: Agent[] = []): Promise<InstalledSkill[]> {
+  const root = await realpath(rootDir);
+  const installed: InstalledSkill[] = [];
+  for (const action of workflowSkills) {
+    const path = `.agents/skills/speckub-${action}/SKILL.md`;
+    const content = await readFile(new URL(`../templates/skills/speckub-${action}/SKILL.md`, import.meta.url), 'utf8');
+    installed.push(await installFile(root, path, content, dryRun));
+    if (action === 'create') {
+      for (const name of ['api-document.md', 'sequence-diagrams.md']) {
+        const resource = `skills/speckub-create/references/${name}`;
+        const reference = await readFile(new URL(`../templates/${resource}`, import.meta.url), 'utf8');
+        installed.push(await installFile(root, `.agents/${resource}`, reference, dryRun));
+      }
+    }
+    for (const agent of [...new Set(agents)]) {
+      if (agent === 'codex') continue;
+      const commandPath = `.${agent === 'claude' ? 'claude' : 'cursor'}/commands/speckub.${action}.md`;
+      const argumentsText = agent === 'claude' ? '$ARGUMENTS' : 'Use the prompt, route prefix, or source path supplied after this command.';
+      const command = `Read ${path} and follow its workflow in this repository.\n\nUser scope/corrections: ${argumentsText}\n`;
+      installed.push(await installFile(root, commandPath, command, dryRun));
+    }
+  }
+  installed.push(...await installDocumentTemplates(root, dryRun));
+  return installed;
+}
+
+async function installDocumentTemplates(root: string, dryRun = false): Promise<InstalledSkill[]> {
+  const files = [
+    { source: 'api-template.md', destination: '.speckub/templates/api.md' },
+    { source: 'api-example.md', destination: '.speckub/examples/api.md' },
+  ];
+  const installed: InstalledSkill[] = [];
+  for (const file of files) {
+    const content = await readFile(new URL(`../templates/documents/${file.source}`, import.meta.url), 'utf8');
+    installed.push(await installFile(root, file.destination, content, dryRun));
+  }
+  return installed;
 }
 
 export async function initProject(
@@ -67,6 +130,15 @@ export async function initProject(
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
       skipped.push(template.destination);
+    }
+  }
+  if (agents.length) {
+    for (const skill of await installWorkflowSkills(root, false, agents)) {
+      (skill.status === 'created' ? created : skipped).push(skill.path);
+    }
+  } else {
+    for (const file of await installDocumentTemplates(root)) {
+      (file.status === 'created' ? created : skipped).push(file.path);
     }
   }
   return { created, skipped };

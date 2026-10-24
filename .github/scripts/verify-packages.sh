@@ -11,7 +11,7 @@ for package in schema core cli; do
 done
 
 for package in schema core cli; do
-  archive="packages/$package/speckub-$package-0.1.0.tgz"
+  archive="packages/$package/speckub-$package-0.1.1.tgz"
   test -f "$archive"
   contents=$(tar -tzf "$archive")
   grep -Fxq 'package/package.json' <<< "$contents"
@@ -23,12 +23,23 @@ for package in schema core cli; do
   }
 done
 
-cli_archive="packages/cli/speckub-cli-0.1.0.tgz"
+cli_archive="packages/cli/speckub-cli-0.1.1.tgz"
 cli_contents=$(tar -tzf "$cli_archive")
 grep -Fxq 'package/dist/bin.js' <<< "$cli_contents"
 grep -Fxq 'package/dist/init.js' <<< "$cli_contents"
+grep -Fxq 'package/dist/scan.js' <<< "$cli_contents"
+for skill in scan relations create validate clarify template; do
+  grep -Fxq "package/templates/skills/speckub-$skill/SKILL.md" <<< "$cli_contents"
+done
 for template in AGENTS.md CLAUDE.md speckub.mdc; do
   grep -Fxq "package/templates/$template" <<< "$cli_contents"
+done
+
+grep -Fxq 'package/templates/skills/speckub-create/references/sequence-diagrams.md' <<< "$cli_contents"
+grep -Fxq 'package/templates/skills/speckub-create/references/api-document.md' <<< "$cli_contents"
+
+for document in api-template.md api-example.md; do
+  grep -Fxq "package/templates/documents/$document" <<< "$cli_contents"
 done
 
 echo "All SpecKub package archives passed inspection."

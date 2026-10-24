@@ -27,6 +27,9 @@ pnpm build
 
 ## Try the CLI
 
+For a runnable API with passing source-reference checks, see the
+[Node API playground](examples/node-api/README.md).
+
 ```sh
 node packages/cli/dist/bin.js list --root examples/spring-boot
 node packages/cli/dist/bin.js inspect users.get-by-id --root examples/spring-boot
@@ -41,7 +44,7 @@ Use the templates in [packages/agent-adapters](packages/agent-adapters/README.md
 
 ## Status
 
-Early development. Packages are not yet published to npm; the public viewer is planned.
+This checkout prepares version `0.1.1`. Publishing is a separate, explicitly approved release step. The public viewer is planned.
 
 ## License
 
