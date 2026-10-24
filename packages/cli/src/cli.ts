@@ -1,5 +1,6 @@
 import { initProject, type Agent } from './init.js';
 import { prepareScan } from './scan.js';
+import { buildReader, serveReader } from './ui.js';
 import { discoverEndpoints, validateEndpoint } from '@speckub/core';
 
 export interface CliIO {
@@ -11,6 +12,7 @@ const usage = `SpecKub CLI
 Usage:
   speckub init [--root DIR] [--docs-dir DIR] [--agent codex|claude|cursor|all] [--json]
   speckub scan [--root DIR] [--docs-dir DIR] [--dry-run] [--json]
+  speckub ui [--root DIR] [--docs-dir DIR] [--out DIR] [--serve] [--port NUMBER] [--json]
   speckub list [--root DIR] [--docs-dir DIR] [--json]
   speckub inspect ID [--root DIR] [--docs-dir DIR] [--json]
   speckub validate --id ID [--root DIR] [--docs-dir DIR] [--json]
@@ -25,16 +27,29 @@ type Options = {
   json: boolean;
   agents: Agent[];
   dryRun: boolean;
+  out?: string;
+  serve: boolean;
+  port?: number;
 };
 
 function parseArgs(args: string[], cwd: string): Options {
   const [command = '--help', ...rest] = args;
-  const options: Options = { command, root: cwd, docsDir: 'docs/api', json: false, agents: [], dryRun: false };
+  const options: Options = { command, root: cwd, docsDir: 'docs/api', json: false, agents: [], dryRun: false, serve: false };
   let positional: string | undefined;
   for (let i = 0; i < rest.length; i++) {
     const argument = rest[i];
     if (argument === '--json') options.json = true;
     else if (argument === '--dry-run') options.dryRun = true;
+    else if (argument === '--serve') options.serve = true;
+    else if (argument === '--out' || argument === '--port') {
+      const value = rest[++i];
+      if (!value || value.startsWith('--')) throw new Error(`Missing value for ${argument}`);
+      if (argument === '--out') options.out = value;
+      else {
+        if (!/^\d+$/.test(value) || Number(value) > 65535) throw new Error('--port must be an integer from 0 to 65535');
+        options.port = Number(value);
+      }
+    }
     else if (argument === '--agent') {
       const value = rest[++i];
       if (!value || !['codex', 'claude', 'cursor', 'all'].includes(value)) throw new Error('Expected --agent codex|claude|cursor|all');
@@ -70,7 +85,7 @@ export async function runCli(args: string[], io: CliIO, cwd = process.cwd()): Pr
     io.stdout(usage);
     return 0;
   }
-  if (!['init', 'scan', 'list', 'inspect', 'validate'].includes(options.command)) {
+  if (!['init', 'scan', 'ui', 'list', 'inspect', 'validate'].includes(options.command)) {
     io.stderr(`Unknown command: ${options.command}`);
     io.stderr(usage);
     return 2;
@@ -92,8 +107,33 @@ export async function runCli(args: string[], io: CliIO, cwd = process.cwd()): Pr
     io.stderr('The list command does not accept --id');
     return 2;
   }
+  if (options.command !== 'ui' && (options.out !== undefined || options.serve || options.port !== undefined)) {
+    io.stderr('--out, --serve, and --port are only supported by ui');
+    return 2;
+  }
+  if (options.port !== undefined && !options.serve) {
+    io.stderr('--port requires --serve');
+    return 2;
+  }
 
   try {
+    if (options.command === 'ui') {
+      if (options.id) { io.stderr('ui does not accept --id'); return 2; }
+      const result = await buildReader(options.root, options.docsDir, options.out);
+      let url: string | undefined;
+      if (options.serve) {
+        const server = await serveReader(result.output, options.port);
+        const address = server.address();
+        if (address && typeof address !== 'string') url = `http://127.0.0.1:${address.port}`;
+      }
+      if (options.json) io.stdout(JSON.stringify({ ...result, ...(url ? { url } : {}) }, null, 2));
+      else {
+        io.stdout(`CREATED ${result.entry} (${result.endpoints} endpoints)`);
+        io.stdout(url ? `Preview: ${url} (Ctrl+C to stop)` : 'Open index.html locally, or serve this directory on a host you control.');
+        io.stdout('This export contains your spec content. Private repository access does not protect a separately hosted copy.');
+      }
+      return 0;
+    }
     if (options.command === 'scan') {
       if (options.id) { io.stderr('scan does not accept --id'); return 2; }
       const result = await prepareScan(options.root, options.docsDir, options.dryRun);

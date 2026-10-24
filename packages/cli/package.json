@@ -1,6 +1,7 @@
 {
   "name": "@speckub/cli",
-  "version": "0.1.1",
+  "description": "AI-agent workflows, Markdown API specifications, and a standalone spec reader.",
+  "version": "0.1.2",
   "type": "module",
   "bin": {
     "speckub": "./dist/bin.js"
@@ -12,13 +13,16 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@speckub/core": "workspace:^"
+    "@mermaid-js/tiny": "^11.17.2",
+    "@speckub/core": "workspace:^",
+    "markdown-it": "^14.1.0"
   },
   "devDependencies": {
+    "@types/markdown-it": "^14.1.2",
     "@types/node": "^22.15.0",
+    "eslint": "^9.25.1",
     "typescript": "^5.8.3",
-    "vitest": "^3.1.1",
-    "eslint": "^9.25.1"
+    "vitest": "^3.1.1"
   },
   "license": "Apache-2.0",
   "engines": {

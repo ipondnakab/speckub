@@ -2,6 +2,12 @@
 
 Deterministic discovery and validation of Markdown API specifications.
 
+Requires Node.js 22 or newer.
+
+```sh
+npm install @speckub/core@0.1.2
+```
+
 ```ts
 import { discoverEndpoints, validateEndpoint } from '@speckub/core';
 
@@ -14,7 +20,7 @@ console.log(JSON.stringify(report, null, 2));
 - Parses frontmatter through `@speckub/schema`.
 - Reports invalid specs, duplicate endpoint IDs and missing source files.
 - Skips symlinks and rejects directory traversal.
-- Reports semantic validation as `skipped` (AI verification is not implemented).
+- Reports semantic validation as `skipped`; optional agent review runs outside this library.
 - Missing documentation directories currently throw an error.
 
-This is a library API, **not yet a CLI**. The CLI is tracked separately.
+For project setup and terminal commands, install [@speckub/cli](https://www.npmjs.com/package/@speckub/cli). This package exposes the library API and does not provide a shell command.

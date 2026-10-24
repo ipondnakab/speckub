@@ -1,6 +1,7 @@
 {
   "name": "@speckub/core",
-  "version": "0.1.1",
+  "description": "Deterministic discovery and source-reference validation for Markdown API specifications.",
+  "version": "0.1.2",
   "type": "module",
   "exports": {
     ".": "./dist/index.js"

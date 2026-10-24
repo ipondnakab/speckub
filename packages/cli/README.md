@@ -1,126 +1,215 @@
 # @speckub/cli
 
-## AI documentation workflow
+**Your code. Your specs. Every branch.**
 
-Initialize the integration for your agent:
+SpecKub helps your coding agent discover HTTP APIs, map service relationships,
+and maintain detailed Markdown contracts. The CLI installs the workflow and
+provides deterministic discovery and structure/source-reference checks. The agent
+reads your implementation across languages and frameworks and reports coverage gaps.
+
+## Version availability
+
+| Capability                                      | `0.1.1`      | `0.1.2`   |
+| ----------------------------------------------- | ------------ | --------- |
+| `init`, `scan`, `list`, `inspect`, `validate`   | Available    | Available |
+| Six documentation skills and editable templates | Available    | Available |
+| `ui` standalone website export/preview          | Not included | Available |
+
+Version `0.1.2` adds the standalone reader, updated installation and workflow
+documentation, and explicit package descriptions. Upgrade the CLI to use `ui`.
+
+## Install in your project
+
+Requires Node.js 22 or newer. Your application can use another language; installing
+the CLI does not require changing it to JavaScript. Run from the project root:
 
 ```sh
-speckub init --root /path/to/project --agent all
+npm install --save-dev @speckub/cli@0.1.2
+npx speckub init --agent codex
 ```
 
-The agent workflow has six steps. The optional text can be a natural-language
-request, HTTP route prefix, service/source directory, or a specific source/spec file.
-With no scope, scan covers the selected repository; create uses confirmed inventory
-entries, and validate reviews existing specs. Clearlify asks for feedback when none
-was supplied.
+For Yarn projects:
 
-| Agent command                                     | Purpose                                           | Output                                                     |
-| ------------------------------------------------- | ------------------------------------------------- | ---------------------------------------------------------- |
-| `/speckub.template [design request or reference]` | Design a custom document template and example     | `.speckub/templates/api.md` and `.speckub/examples/api.md` |
-| `/speckub.scan [scope or prompt]`                 | Discover APIs with AI across languages/frameworks | `.speckub/scan.md` inventory; no endpoint docs             |
-| `/speckub.relations [scope or prompt]`            | Map API/service interactions before writing specs | `.speckub/relations.md` with edge table and Mermaid graph  |
-| `/speckub.create [scope or prompt]`               | Create/update docs from inventory and source      | `docs/api/**/*.md`                                         |
-| `/speckub.validate [scope or prompt]`             | Optional AI review against source                 | `.speckub/validation.md` findings                          |
-| `/speckub.clarify [scope or correction]`          | Optional corrections after user review            | Targeted spec edits and unresolved questions               |
+```sh
+yarn add --dev @speckub/cli@0.1.2 --registry https://registry.npmjs.org
+yarn speckub init --agent codex
+```
 
-Examples in your agent chat:
+Core and schema are included as dependencies. Installing `@speckub/schema` alone
+does not install the CLI. `npm run @speckub` is not a package-execution command.
+
+For a global installation instead:
+
+```sh
+npm install --global @speckub/cli@0.1.2
+speckub init --agent codex
+```
+
+Or initialize without adding a project dependency:
+
+```sh
+npx @speckub/cli@0.1.2 init --agent codex
+```
+
+Choose `--agent claude`, `--agent cursor`, or `--agent all` for other integrations.
+Open your coding agent in the directory where the files were initialized.
+Initialization creates scaffolding; it does not scan your source or create specs.
+Existing instructions, skills, command files, templates, and examples are preserved.
+Without `--agent`, init creates the docs directory and editable template/example.
+
+## Run the agent workflow
+
+Run these **in your agent chat**, one at a time, reviewing each result:
+
+| Step                 | Codex                         | Claude / Cursor entrypoint    | Output                                                     |
+| -------------------- | ----------------------------- | ----------------------------- | ---------------------------------------------------------- |
+| Template (optional)  | `$speckub-template`           | `/speckub.template`           | `.speckub/templates/api.md` and `.speckub/examples/api.md` |
+| Scan                 | `$speckub-scan api/`          | `/speckub.scan api/`          | `.speckub/scan.md` inventory; no endpoint docs             |
+| Relations            | `$speckub-relations`          | `/speckub.relations`          | `.speckub/relations.md` with evidence and diagram          |
+| Create               | `$speckub-create`             | `/speckub.create`             | `docs/api/**/*.md` endpoint contracts                      |
+| AI review (optional) | `$speckub-validate`           | `/speckub.validate`           | `.speckub/validation.md` findings                          |
+| Clarify (optional)   | `$speckub-clarify <feedback>` | `/speckub.clarify <feedback>` | Targeted corrections and explicit unknowns                 |
+
+Supply a natural-language prompt, HTTP prefix, source/service directory, or file
+as scope. With no scope, scan inspects the selected root and later skills consult
+its inventory; confirm the scope before changing services. Clarify can correct
+inventory or relationships before docs exist, as well as documents afterward.
+
+SpecKub installs portable skills under `.agents/skills/`, plus command entrypoints
+under `.claude/commands/` and `.cursor/commands/` for selected agents. Command
+availability depends on your host. In Codex, use the `$speckub-*` skill names;
+Cursor command files do not register `/speckub.scan` as a Codex slash command.
+If discovery fails, verify the agent's working directory and restart it if needed,
+or explicitly ask it to read `.agents/skills/speckub-scan/SKILL.md`.
+
+The terminal command below only prepares skills/templates and prints a prompt to
+send to your agent. It does not invoke a model or generate endpoint docs:
+
+```sh
+npx speckub scan --root /path/to/project
+```
+
+`scan --dry-run` previews installation without writing; `--json` returns the
+installation results and handoff prompt. Free-text scope belongs in agent chat,
+not as an unsupported terminal positional argument.
+
+## Customize your documents
+
+Edit `.speckub/templates/api.md` and `.speckub/examples/api.md` directly, or use:
 
 ```text
-/speckub.scan api/
-/speckub.relations
-/speckub.create /api/chat
-/speckub.validate docs/api/
-/speckub.clarify /api/chat document the missing 429 response
+$speckub-template Use concise docs with detailed errors and sequence diagrams
+$speckub-template Follow the style in docs/reference-api.md
 ```
 
-Each skill adapts to the repository; unresolved routes and deployment behavior are reported
-as coverage gaps, not guarantees of universal discovery.
+Claude/Cursor use `/speckub.template`. Explicit user instructions take precedence
+over the project layout, which takes precedence over bundled defaults. Required
+HTTP frontmatter and source-evidence rules stay in effect. `{{...}}` placeholders
+are instructions for the agent, not an executable template language.
 
-`init --agent ...` installs all six portable skills under `.agents/skills/`.
-Claude and Cursor integrations also install command entrypoints under
-`.claude/commands/` and `.cursor/commands/`. Actual command discovery depends on
-agent support; start a fresh session if needed. In Codex, invoke the skills as
-`$speckub-scan`, `$speckub-relations`, `$speckub-create`, `$speckub-validate`, and `$speckub-clarify`.
-Any agent can explicitly read the corresponding installed `SKILL.md` instead.
-Existing skills, commands, and agent instructions are never overwritten.
+The template/example live outside endpoint discovery. Examples illustrate style,
+not actual repository behavior. Template changes do not rewrite existing specs;
+use create/clarify for selected docs. Reinitialization preserves customizations,
+so merge updated skill guidance manually when an existing file is skipped.
 
-For a terminal handoff without installing agent command entrypoints:
+Detailed specs cover requests, responses, authentication, errors, business rules,
+relationships, source-backed Mermaid sequence diagrams, examples, limits, evidence,
+and uncertainties. The agent reviews completeness; the CLI does not enforce every
+Markdown section or prove the diagram matches runtime behavior.
+
+## Inspect and validate in your terminal
 
 ```sh
-speckub scan --root /path/to/project
+npx speckub list
+npx speckub inspect <endpoint-id>
+npx speckub validate --id <endpoint-id> --json
 ```
 
-This prepares all six portable skills and prints a scan task prompt. It does not
-invoke a model or generate docs. `--docs-dir DIR` selects the later documentation
-directory; `--dry-run` previews skill installation without writing; `--json` returns
-installation details and the prompt. The agent accepts the scope/prompt in chat,
-not as terminal positional arguments.
+Replace `<endpoint-id>` with an ID returned by `list`. Yarn users can replace
+`npx speckub` with `yarn speckub`. A bare `speckub` shell command requires a global
+installation or a package-manager script environment that resolves the local bin.
 
-Creation runs structural/reference checks with the CLI when available. Optional
-AI `/speckub.validate` reviews source semantics separately from deterministic
-terminal `speckub validate --id ID`; the latter still reports semantic checks as
-`skipped`. Review does not edit specs automatically; clarify handles corrections.
+Common options: `--root DIR`, `--docs-dir DIR` (default `docs/api`), and `--json`.
+Exit codes: 0 success, 1 validation/runtime error, 2 usage error. `validate` needs
+`--id`; it is separate from the optional AI review skill. Its semantic check stays
+`skipped`. CLI structure/reference checks, AI review, runtime tests, and Mermaid
+rendering should be reported separately.
 
-Generated docs follow the [API document standard](templates/skills/speckub-create/references/api-document.md):
-overview, contract, auth, request/response field tables, errors, behavior,
-relationships, sequence diagram, examples, limits, and evidence/verification.
-The standard includes a shared quality checklist for create, validate, and clarify.
-Unknown details stay explicit rather than being guessed. These Markdown quality
-criteria are reviewed by the agent; they are not new deterministic CLI checks.
+## Nested API projects
 
-Generated endpoint docs include a Mermaid `Request flow` sequence diagram when
-source supports its ordering and participants. Creation uses the relationship map
-for identities and source call sites for call order; AI validation reviews branches,
-responses, and dependencies, and clarification keeps diagrams synchronized with
-corrections. The CLI does not parse Mermaid. See the
-[sequence diagram guidance](templates/skills/speckub-create/references/sequence-diagrams.md).
-
-From a source checkout, build with `pnpm build` and replace `speckub` with
-`node /absolute/path/to/speckub/packages/cli/dist/bin.js`.
-
-Local CLI for inspecting and validating Git-backed Markdown API specifications.
+If the CLI is installed in a parent repository and the API is under `portfolio-api/`:
 
 ```sh
-pnpm install
-pnpm build
-node packages/cli/dist/bin.js list --root examples/spring-boot
-node packages/cli/dist/bin.js inspect users.get-by-id --root examples/spring-boot
-node packages/cli/dist/bin.js validate --id users.get-by-id --root examples/spring-boot --json
+yarn speckub init --root portfolio-api --agent all
+code -n portfolio-api
 ```
 
-Options: `--root DIR` (defaults to current working directory), `--docs-dir DIR` (defaults to `docs/api`), `--json`.
+Start the agent inside that initialized service, then use its skill names. Merely
+opening a child source file in the parent workspace does not change the agent's
+root. Alternatively, explicitly load the child skill file and specify its root.
 
-Exit codes: `0` success, `1` validation/runtime error, `2` usage error. `validate` reports semantic verification as `skipped`, not `passed`.
-
-**Note:** The example specification includes a source reference that may not exist; validation correctly fails until the referenced source file exists.
-
-## Customize the document layout
-
-`init` seeds `.speckub/templates/api.md` and `.speckub/examples/api.md`, even without
-an agent selection. Edit them directly or run this in your agent after installing
-its integration:
-
-```text
-/speckub.template Use concise endpoint docs, detailed error tables, and sequence diagrams
-/speckub.template Follow the style in docs/reference-api.md
-```
-
-Codex uses `$speckub-template`. The skill changes the template and illustrative
-example, not existing endpoint specs. Then use `/speckub.create [scope]` to write
-or update selected docs. Explicit user instructions take precedence over the
-project template, which takes precedence over bundled layout defaults. Required
-HTTP frontmatter and source-evidence rules remain unchanged. The `{{...}}` markers
-are instructions for the agent, not a built-in executable rendering engine.
-Examples remain outside the discovery directory and are not treated as real APIs.
-Reinitialization preserves customized templates, examples, skills and commands;
-existing installed skills may need manual merging to adopt new guidance.
-
-## Initialize a project
+Run terminal checks from the parent:
 
 ```sh
-node packages/cli/dist/bin.js init --root /path/to/project --agent all
+yarn speckub list --root portfolio-api
+yarn speckub validate --root portfolio-api --id <endpoint-id>
 ```
 
-`init` creates `docs/api/` and installs editable agent instruction templates for Codex (`AGENTS.md`), Claude Code (`CLAUDE.md`), and Cursor (`.cursor/rules/speckub.mdc`). Choose a single agent with `--agent codex`, `--agent claude`, or `--agent cursor`. Without `--agent`, the documentation directory and editable template/example files are created. Existing instruction files are **never overwritten**; review and merge them manually. `--json` produces a machine-readable list of created/skipped files.
+The [nested-project guide](https://github.com/ipondnakab/speckub/blob/main/docs/user-story.md#nested-api-project)
+explains the complete workflow and fallback invocation.
 
-This checkout prepares CLI version `0.1.1`. Use the built checkout to try these changes before an explicitly approved npm release.
+## Standalone web reader
+
+From your initialized project, with CLI `0.1.2` or newer installed:
+
+```sh
+npx speckub ui --serve
+```
+
+For your private repository:
+
+```sh
+npx speckub ui --root /path/to/project --out .speckub/site --serve --port 4173
+```
+
+Open the printed loopback URL. Without `--serve`, open the generated `index.html`
+or serve the entire output directory on a host you control. The reader includes
+endpoint/content search, method filters, section navigation, tables, code, and
+bundled Mermaid Tiny diagrams with a source fallback. Invalid/duplicate specs
+fail export; an empty docs directory yields an empty-state page.
+
+`--docs-dir DIR` changes the input. `--out DIR` must be a dedicated directory
+inside the project without docs overlap or symlinked output paths. Nonempty
+unowned directories are refused; rebuilding an owned reader replaces generated
+assets. `--port 0` chooses a free loopback port and requires `--serve`. `--json`
+returns output details. Stop preview with Ctrl+C. Rebuild after spec changes;
+the site is a snapshot, not a watcher or an interactive API client.
+
+### Private repository access
+
+Generation does not publish, deploy, or call an AI service. Assets are bundled
+without a CDN or analytics. Source files and environment files are not copied;
+spec bodies and source-reference paths are included. Add the output directory
+to your project's ignore rules if exports should not be committed.
+
+The preview binds to `127.0.0.1` and serves generated assets only. The export has
+no built-in authentication: configure access controls on your chosen host. A
+private repo does not make a separately hosted export private. All selected specs
+are included, even those hidden by search filters; filtering is not authorization.
+
+Raw HTML is escaped, remote Markdown images are not loaded, and unexported local
+file links are disabled. Mermaid uses strict mode; Tiny omits some specialized
+diagram/layout types. Export tests do not prove browser rendering or API behavior.
+
+## Guides and examples
+
+- [Project and user-story guide](https://github.com/ipondnakab/speckub/blob/main/docs/user-story.md)
+- [Agent integrations](https://github.com/ipondnakab/speckub/blob/main/packages/agent-adapters/README.md)
+- [API document standard](https://github.com/ipondnakab/speckub/blob/main/packages/cli/templates/skills/speckub-create/references/api-document.md)
+- [Sequence diagram guidance](https://github.com/ipondnakab/speckub/blob/main/packages/cli/templates/skills/speckub-create/references/sequence-diagrams.md)
+- [Runnable API playground](https://github.com/ipondnakab/speckub/tree/main/examples/node-api)
+- [Release guide](https://github.com/ipondnakab/speckub/blob/main/docs/npm-release.md)
+
+## License
+
+Apache-2.0. See the license included in the package.
