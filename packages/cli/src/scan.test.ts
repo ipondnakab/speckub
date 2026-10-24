@@ -34,7 +34,8 @@ describe('agent scan preparation', () => {
     const result = await prepareScan(root);
     expect(result.mode).toBe('agent-skill');
     expect(result.status).toBe('created');
-    expect(result.skills).toHaveLength(10);
+    expect(result.skills).toHaveLength(11);
+    await access(join(root, '.agents/skills/speckub-create/references/discovery.md'));
     expect(
       await readFile(
         join(root, '.agents/skills/speckub-create/references/api-document.md'),
@@ -164,7 +165,7 @@ describe('agent scan preparation', () => {
         root,
       ),
     ).toBe(0);
-    expect(JSON.parse(output.pop()!).endpoints).toHaveLength(1);
+    expect(JSON.parse(output.pop()!).endpoints).toEqual([]);
     await writeFile(template, 'custom template');
     await writeFile(example, 'custom example');
     await initProject(root, 'docs/api', ['claude']);

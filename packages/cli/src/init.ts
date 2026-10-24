@@ -67,7 +67,7 @@ export async function installWorkflowSkills(rootDir: string, dryRun = false, age
     const content = await readFile(new URL(`../templates/skills/speckub-${action}/SKILL.md`, import.meta.url), 'utf8');
     installed.push(await installFile(root, path, content, dryRun));
     if (action === 'create') {
-      for (const name of ['api-document.md', 'sequence-diagrams.md']) {
+      for (const name of ['api-document.md', 'sequence-diagrams.md', 'discovery.md']) {
         const resource = `skills/speckub-create/references/${name}`;
         const reference = await readFile(new URL(`../templates/${resource}`, import.meta.url), 'utf8');
         installed.push(await installFile(root, `.agents/${resource}`, reference, dryRun));

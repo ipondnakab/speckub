@@ -14,14 +14,14 @@ Requires Node.js 22 or newer to run the CLI. The target project can use another
 language; SpecKub does not require adding JavaScript application code.
 
 ```sh
-npm install --save-dev @speckub/cli@0.1.2
+npm install --save-dev @speckub/cli@0.1.3
 npx speckub init --agent codex
 ```
 
 For Yarn projects:
 
 ```sh
-yarn add --dev @speckub/cli@0.1.2 --registry https://registry.npmjs.org
+yarn add --dev @speckub/cli@0.1.3 --registry https://registry.npmjs.org
 yarn speckub init --agent codex
 ```
 
@@ -122,3 +122,16 @@ For source-checkout commands, use `node packages/cli/dist/bin.js` after building
 ## License
 
 Apache-2.0. See [LICENSE](LICENSE).
+
+## Repository-wide discovery in 0.1.3
+
+Version `0.1.3` lets `speckub ui`, `list`, `inspect`, and `validate` discover
+SpecKub `.md` files anywhere under the selected root. `--docs-dir` is an optional
+filter; `docs/api` stays the default authoring destination. New real specs use
+`speckub: true` in YAML frontmatter. Legacy unmarked endpoint contracts remain
+supported, and `speckub: false` excludes templates/examples. Ordinary Markdown
+is ignored; marked invalid contracts and duplicate IDs are reported.
+
+Dependency, build, tooling, and UI output directories are excluded; see the
+[discovery details](packages/cli/README.md#repository-wide-discovery-in-013).
+Versions through `0.1.2` defaulted to discovery under `docs/api`.

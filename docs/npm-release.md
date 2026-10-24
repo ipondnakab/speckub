@@ -14,12 +14,25 @@ All three packages are publicly available with the `latest` tag at `0.1.2`.
 Do not republish `0.1.0`, `0.1.1`, or `0.1.2`. Versions already used on npm cannot be reused. See
 [npm publish](https://docs.npmjs.com/cli/v11/commands/npm-publish/).
 
+## Candidate 0.1.3
+
+The maintainer approved publishing schema, core, and CLI version `0.1.3` after
+updating the npm-facing documentation. The candidate adds repository-wide spec
+discovery, explicit `speckub` markers, legacy compatibility, custom-template
+coverage, and detailed npm use cases and getting-started stories.
+
+Source manifests, archive checks, and the workflow confirmation use `0.1.3`.
+Publish after the maintainer reviews/merges the release PR and checks pass. Do not
+merge automatically. Publication approval is already recorded; browser/2FA may
+still require the maintainer. Until registry verification succeeds, `0.1.2` remains
+the latest published release. The public GitHub-URL reader is still planned.
+
 ## Released 0.1.2
 
 The approved release updated `@speckub/schema`, `@speckub/core`, and
 `@speckub/cli` together to `0.1.2`. It includes the standalone `ui` reader,
 renderer dependencies, npm-facing READMEs, and explicit package descriptions.
-The source manifests, archive checks, and workflow confirmation now use `0.1.2`.
+That release used `0.1.2` manifests and archives.
 Downloaded registry archives matched the inspected release files by SHA-256.
 A fresh npm installation verified all three versions plus CLI help, initialization,
 listing, inspection, validation, and reader export. The published source is
@@ -29,9 +42,8 @@ commit `7370fbf3d3a28c13c2537cea30321bdc853e888b` in
 The maintainer explicitly requested a version bump and public npm publication.
 Publication used the existing maintainer login and inspected local archives;
 it did not trigger the production Actions workflow or merge a pull request.
-Source changes remain on the feature branch for review. The workflow still has
-the historical `publish-0.1.2` gate; do not trigger it now that this version exists.
-Update versions and the gate together when preparing a later approved release.
+PR #16 has since been merged into `main`. The next candidate uses the
+`publish-0.1.3` gate; no production workflow has been dispatched for this candidate.
 
 Changing a local README or `description` does not update the npm page. The reviewed
 README and metadata must be included in a new approved package publication. Do not
@@ -65,7 +77,7 @@ pnpm build
 bash .github/scripts/verify-packages.sh
 ```
 
-The script generates archives labeled `0.1.2`. The workflow uses those same
+The script generates candidate archives labeled `0.1.3`. The workflow uses those same
 archive names. Publish only the exact inspected archives after approval, and
 never replace a package version already accepted by npm.
 
@@ -73,7 +85,8 @@ Inspect packed manifests for versions, explicit descriptions, repository metadat
 public access, license, engines, CLI bin, and converted internal dependency ranges.
 Verify READMEs use npm installation commands and absolute repository links that
 exist on the referenced revision. Clearly identify the version required for each
-feature; installed `0.1.1` users must upgrade to `0.1.2` before running `ui`.
+feature: `ui` requires `0.1.2` or newer; repository-wide default discovery
+requires `0.1.3`.
 
 The CLI archive should include:
 

@@ -1,6 +1,6 @@
 import { readFile, readdir, realpath, stat } from 'node:fs/promises';
 import { isAbsolute, join, relative, resolve, sep } from 'node:path';
-import { parseEndpointMarkdown, type EndpointSpec } from '@speckub/schema';
+import { discoverEndpointMarkdown, type EndpointSpec } from '@speckub/schema';
 
 export interface ValidationIssue {
   code: string;
@@ -40,17 +40,33 @@ function inside(root: string, candidate: string): boolean {
   return rel === '' || (rel !== '..' && !rel.startsWith('..' + sep) && !isAbsolute(rel));
 }
 
-async function walk(root: string, current: string, output: string[]): Promise<void> {
+const excludedDirectories = new Set([
+  '.git', 'node_modules', '.pnpm-store', 'dist', 'build', 'coverage',
+  '.next', '.nuxt', '.turbo', '.cache', 'vendor', '.venv', 'venv',
+  '.speckub', '.agents', '.claude', '.cursor', '.codex',
+]);
+
+export interface DiscoveryOptions {
+  /** Additional repository-relative directories to omit, such as reader output. */
+  excludeDirs?: string[];
+}
+
+async function walk(current: string, output: string[], excluded: string[]): Promise<void> {
   for (const entry of await readdir(current, { withFileTypes: true })) {
     const absolute = join(current, entry.name);
-    if (entry.isSymbolicLink()) continue;
-    if (entry.isDirectory()) await walk(root, absolute, output);
-    else if (entry.isFile() && entry.name.endsWith('.md') && inside(root, absolute)) output.push(absolute);
+    if (entry.isSymbolicLink() || excluded.some((dir) => inside(dir, absolute))) continue;
+    if (entry.isDirectory()) {
+      if (!excludedDirectories.has(entry.name)) await walk(absolute, output, excluded);
+    } else if (entry.isFile() && /\.md$/i.test(entry.name)) output.push(absolute);
   }
 }
 
-/** Discover specs without following symlinks outside the documentation directory. */
-export async function discoverEndpoints(repositoryRoot: string, docsDir = 'docs/api'): Promise<DiscoveryResult> {
+/** Discover marked and legacy specs across the repository, without following symlinks. */
+export async function discoverEndpoints(
+  repositoryRoot: string,
+  docsDir = '.',
+  options: DiscoveryOptions = {},
+): Promise<DiscoveryResult> {
   const root = await realpath(repositoryRoot);
   const directory = resolve(root, docsDir);
   if (!inside(root, directory)) throw new Error('Documentation directory escapes repository root');
@@ -58,7 +74,8 @@ export async function discoverEndpoints(repositoryRoot: string, docsDir = 'docs/
   if (!inside(root, docsRoot)) throw new Error('Documentation directory resolves outside repository root');
 
   const files: string[] = [];
-  await walk(docsRoot, docsRoot, files);
+  const excluded = (options.excludeDirs ?? []).map((dir) => resolve(root, dir));
+  await walk(docsRoot, files, excluded);
   files.sort();
   const endpoints: DiscoveredEndpoint[] = [];
   const issues: ValidationIssue[] = [];
@@ -67,7 +84,8 @@ export async function discoverEndpoints(repositoryRoot: string, docsDir = 'docs/
   for (const file of files) {
     const relativeFile = relative(root, file).split(sep).join('/');
     const source = await readFile(file, 'utf8');
-    const result = parseEndpointMarkdown(source);
+    const result = discoverEndpointMarkdown(source);
+    if (!result) continue;
     if (!result.success) {
       issues.push(...result.issues.map((issue) => ({
         code: 'INVALID_SPEC',
@@ -98,7 +116,7 @@ export async function discoverEndpoints(repositoryRoot: string, docsDir = 'docs/
 export async function validateEndpoint(
   repositoryRoot: string,
   id: string,
-  docsDir = 'docs/api',
+  docsDir = '.',
 ): Promise<ValidationReport> {
   const root = await realpath(repositoryRoot);
   const discovery = await discoverEndpoints(root, docsDir);

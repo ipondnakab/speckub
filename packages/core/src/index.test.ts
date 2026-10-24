@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { mkdtemp, mkdir, rm, symlink, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { discoverEndpoints, validateEndpoint } from './index.js';
@@ -63,5 +63,43 @@ describe('core endpoint validation', () => {
   it('rejects docs directories outside the repository', async () => {
     const root = await fixture();
     await expect(discoverEndpoints(root, '../outside')).rejects.toThrow();
+  });
+});
+
+
+describe('repository-wide discovery', () => {
+  it('discovers nested and root specs, skips unrelated files and tooling, and scopes explicitly', async () => {
+    const root = await fixture();
+    const original = await readFile(join(root, 'docs/api/user.md'), 'utf8');
+    await mkdir(join(root, 'services/orders/contracts'), { recursive: true });
+    await writeFile(join(root, 'services/orders/contracts/orders.MD'), original.replace('users.get-by-id', 'orders.get').replace('specVersion: 1', 'speckub: true\nspecVersion: 1'));
+    await writeFile(join(root, 'root.md'), original.replace('users.get-by-id', 'root.get'));
+    await writeFile(join(root, 'README.md'), '# Unrelated readme');
+    await writeFile(join(root, 'docs/api/guide.md'), '---\ntitle: Guide\n---\nInstructions');
+    await writeFile(join(root, 'example.md'), original.replace('specVersion: 1', 'speckub: false\nspecVersion: 1'));
+    for (const dir of ['node_modules/pkg', '.git', '.speckub/examples', '.agents/skills/demo', 'dist']) {
+      await mkdir(join(root, dir), { recursive: true });
+      await writeFile(join(root, dir, 'duplicate.md'), original);
+    }
+    const result = await discoverEndpoints(root);
+    expect(result.issues).toEqual([]);
+    expect(result.endpoints.map((e) => e.file)).toEqual(['docs/api/user.md', 'root.md', 'services/orders/contracts/orders.MD']);
+    expect((await discoverEndpoints(root, 'services')).endpoints.map((e) => e.spec.id)).toEqual(['orders.get']);
+    expect((await validateEndpoint(root, 'orders.get')).status).toBe('passed');
+  });
+  it('reports marked invalid files and duplicate IDs across directories', async () => {
+    const root = await fixture();
+    await writeFile(join(root, 'broken.md'), '---\nspeckub: true\n---');
+    await writeFile(join(root, 'duplicate.md'), await readFile(join(root, 'docs/api/user.md'), 'utf8'));
+    expect((await discoverEndpoints(root)).issues.map((i) => i.code)).toContain('INVALID_SPEC');
+    expect((await discoverEndpoints(root)).issues.map((i) => i.code)).toContain('DUPLICATE_ENDPOINT_ID');
+  });
+  it('works without docs/api and does not follow directory symlinks', async () => {
+    const root = await fixture();
+    const original = await readFile(join(root, 'docs/api/user.md'), 'utf8');
+    await rm(join(root, 'docs'), { recursive: true });
+    await writeFile(join(root, 'api.md'), original);
+    await symlink(root, join(root, 'loop'));
+    expect((await discoverEndpoints(root)).endpoints).toHaveLength(1);
   });
 });

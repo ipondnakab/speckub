@@ -1,4 +1,5 @@
 ---
+speckub: false
 specVersion: 1
 id: example.users.get-by-id
 kind: http

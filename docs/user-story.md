@@ -15,14 +15,14 @@ UI, event, or architecture specification types.
 Run from the directory that should own `.agents/`, `.speckub/`, and `docs/api/`:
 
 ```sh
-npm install --save-dev @speckub/cli@0.1.2
+npm install --save-dev @speckub/cli@0.1.3
 npx speckub init --agent codex
 ```
 
 Or use Yarn consistently with an existing Yarn project:
 
 ```sh
-yarn add --dev @speckub/cli@0.1.2 --registry https://registry.npmjs.org
+yarn add --dev @speckub/cli@0.1.3 --registry https://registry.npmjs.org
 yarn speckub init --agent codex
 ```
 
@@ -107,7 +107,7 @@ layout. Confirm the agent is using the intended root and docs directory rather
 than assuming omitted scope guarantees a particular service selection. For a
 bounded task, pass a route prefix or source path explicitly.
 
-Review `docs/api/**/*.md` for contracts, fields, auth, success/error responses,
+Review the discovered endpoint files (new docs default to `docs/api/`) for contracts, fields, auth, success/error responses,
 business behavior, relationships, sequence diagrams, examples, limits, and evidence.
 Unknown details should stay explicit. Existing IDs and useful handwritten sections
 should survive. Creation runs available deterministic CLI checks for changed IDs;
@@ -242,3 +242,19 @@ inspect the inventory and pass scope explicitly when switching services/tasks.
 | Validation says endpoint not found      | Use the `id` from frontmatter/`list`, not a filename guessed as an ID.                                                                                                                     |
 | Init skips files                        | Expected preservation behavior. Review and merge updated guidance manually; reinstalling does not replace custom files.                                                                    |
 | npm reports 404 after a publication     | Package availability is not guaranteed immediately. Confirm the exact version/registry and accepted publish result; do not republish an accepted version just because a lookup is delayed. |
+
+## Repository-wide reader workflow in 0.1.3
+
+With version `0.1.3`, a team
+can keep `services/users/contracts/get.md` beside its service and
+`docs/payments/create.md` with shared docs. Each new endpoint has `speckub: true`
+and the normal HTTP frontmatter. `speckub list` and `speckub ui --serve` find both;
+`--docs-dir services/users` restricts the result. Existing valid unmarked specs
+are still found. README files are ignored, and templates/examples use
+`speckub: false` in the excluded `.speckub/` directory.
+
+Create checks existing IDs throughout the root before writing new docs, retaining
+existing locations. Invalid marked files and duplicate IDs block export with
+file-specific errors. The full directory exclusions and upgrade guidance are in
+[the CLI guide](../packages/cli/README.md#repository-wide-discovery-in-013).
+Upgrade from `0.1.2` to use repository-wide default discovery.

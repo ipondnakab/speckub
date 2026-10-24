@@ -1,4 +1,5 @@
 ---
+speckub: false
 specVersion: 1
 id: '{{endpoint_id}}'
 kind: http
@@ -13,7 +14,7 @@ source:
 tables and examples here. The agent replaces all {{placeholders}} from evidence;
 these markers are not executable template syntax. Preserve required frontmatter.
 Use actual source files, repeat source entries as needed, or omit source when
-none can be established and report that gap. Keep this file outside docs/api/. -->
+none can be established and report that gap. Keep this file in .speckub/templates/. Use speckub: true in real endpoint docs. -->
 
 # {{title}}
 
