@@ -49,7 +49,7 @@ const slug = (value: string) =>
 
 export async function buildReader(
   rootDir: string,
-  docsDir = 'docs/api',
+  docsDir = '.',
   outDir = '.speckub/site',
 ) {
   const root = await realpath(rootDir);
@@ -59,7 +59,7 @@ export async function buildReader(
     throw new Error(
       'UI output must be a dedicated directory inside the project',
     );
-  if (inside(docs, output) || inside(output, docs))
+  if (docs !== root && (inside(docs, output) || inside(output, docs)))
     throw new Error('UI output must not overlap the documentation directory');
   for (let parent = output; parent !== root; parent = resolve(parent, '..')) {
     const info = await lstat(parent).catch((error: NodeJS.ErrnoException) => {
@@ -107,7 +107,7 @@ export async function buildReader(
     if (info && !info.isFile())
       throw new Error(`UI output asset is not a regular file: ${name}`);
   }
-  const discovery = await discoverEndpoints(root, docsDir);
+  const discovery = await discoverEndpoints(root, docsDir, { excludeDirs: [outDir] });
   if (discovery.issues.length)
     throw new Error(
       discovery.issues

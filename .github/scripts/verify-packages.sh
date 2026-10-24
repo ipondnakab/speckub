@@ -11,7 +11,7 @@ for package in schema core cli; do
 done
 
 for package in schema core cli; do
-  archive="packages/$package/speckub-$package-0.1.2.tgz"
+  archive="packages/$package/speckub-$package-0.1.3.tgz"
   test -f "$archive"
   contents=$(tar -tzf "$archive")
   grep -Fxq 'package/package.json' <<< "$contents"
@@ -23,7 +23,7 @@ for package in schema core cli; do
   }
 done
 
-cli_archive="packages/cli/speckub-cli-0.1.2.tgz"
+cli_archive="packages/cli/speckub-cli-0.1.3.tgz"
 cli_contents=$(tar -tzf "$cli_archive")
 grep -Fxq 'package/dist/bin.js' <<< "$cli_contents"
 grep -Fxq 'package/dist/init.js' <<< "$cli_contents"
@@ -41,6 +41,7 @@ done
 
 grep -Fxq 'package/templates/skills/speckub-create/references/sequence-diagrams.md' <<< "$cli_contents"
 grep -Fxq 'package/templates/skills/speckub-create/references/api-document.md' <<< "$cli_contents"
+grep -Fxq 'package/templates/skills/speckub-create/references/discovery.md' <<< "$cli_contents"
 
 for document in api-template.md api-example.md; do
   grep -Fxq "package/templates/documents/$document" <<< "$cli_contents"

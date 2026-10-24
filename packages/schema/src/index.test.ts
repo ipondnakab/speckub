@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { endpointSchema, isEndpointId, parseEndpointMarkdown, SPEC_VERSION } from './index.js';
+import { discoverEndpointMarkdown, endpointSchema, isEndpointId, parseEndpointMarkdown, SPEC_VERSION } from './index.js';
 
 const valid = `---
 specVersion: 1
@@ -61,5 +61,28 @@ describe('SpecKub schema v1', () => {
 
   it('requires a non-empty summary', () => {
     expect(parseEndpointMarkdown(valid.replace('summary: Get user by ID', 'summary: "  "')).success).toBe(false);
+  });
+});
+
+
+describe('Markdown discovery identity', () => {
+  it('recognizes explicit and legacy specs and preserves tags', () => {
+    expect(discoverEndpointMarkdown(valid)?.success).toBe(true);
+    const result = discoverEndpointMarkdown(valid.replace('specVersion: 1', 'speckub: true\nspecVersion: 1\ntags: [users]'));
+    expect(result?.success).toBe(true);
+    if (result?.success) expect(result.data).toMatchObject({ speckub: true, tags: ['users'] });
+  });
+  it('ignores ordinary Markdown, unrelated YAML, fenced examples, and opted-out specs', () => {
+    for (const text of ['# Hello', '---\nnull\n---', '---\n- item\n---', '---\ntitle: Guide\n---\nText', '---\ntitle: [broken\n---',
+      '# Example\n```yaml\n' + valid + '\n```', valid.replace('specVersion: 1', 'speckub: false\nspecVersion: 1')]) {
+      expect(discoverEndpointMarkdown(text)).toBeUndefined();
+    }
+  });
+  it('reports malformed, incomplete, and unsupported explicitly marked specs', () => {
+    for (const text of ['---\nspeckub: true\nsummary: [broken\n---', '---\nspeckub: true\n---',
+      valid.replace('specVersion: 1', 'speckub: true\nspecVersion: 99'),
+      valid.replace('specVersion: 1', 'speckub: "true"\nspecVersion: 1')]) {
+      expect(discoverEndpointMarkdown(text)?.success).toBe(false);
+    }
   });
 });

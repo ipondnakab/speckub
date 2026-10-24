@@ -21,6 +21,7 @@ const sourcePathSchema = z.string().min(1).refine(
 );
 
 export const endpointSchema = z.object({
+  speckub: z.literal(true).optional(),
   specVersion: z.literal(SPEC_VERSION),
   id: endpointIdSchema,
   kind: z.literal('http'),
@@ -28,6 +29,7 @@ export const endpointSchema = z.object({
   path: z.string().startsWith('/').min(1),
   summary: z.string().trim().min(1),
   source: z.array(sourcePathSchema).optional(),
+  tags: z.array(z.string().trim().min(1)).optional(),
 }).superRefine((value, ctx) => {
   const pathParameters = [...value.path.matchAll(/\{([^{}]+)\}/g)].map((match) => match[1]);
   if (pathParameters.some((name) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(name))) {
@@ -56,7 +58,8 @@ export function parseEndpointMarkdown(markdown: string): ParseResult {
 
   let parsed: matter.GrayMatterFile<string>;
   try {
-    parsed = matter(markdown);
+    // Disable the global cache: failed YAML parses must not become cached empty data.
+    parsed = matter(markdown, {});
   } catch (error) {
     return {
       success: false,
@@ -75,4 +78,30 @@ export function parseEndpointMarkdown(markdown: string): ParseResult {
     };
   }
   return { success: true, data: result.data, body: parsed.content };
+}
+
+/** Classify Markdown without treating unrelated documentation as an invalid spec.
+ * Explicit false opts out (for templates/examples). Legacy valid v1 specs remain
+ * discoverable; invalid legacy candidates retain actionable validation errors.
+ */
+export function discoverEndpointMarkdown(markdown: string): ParseResult | undefined {
+  if (!/^---\r?\n/.test(markdown)) return undefined;
+  let data: Record<string, unknown>;
+  try {
+    data = matter(markdown, {}).data;
+  } catch {
+    // Malformed YAML cannot be classified structurally. Only inspect its header,
+    // never fenced examples or prose in the document body.
+    const header = markdown.slice(markdown.indexOf('\n') + 1).split(/^---\s*$/m, 1)[0];
+    if (!/^(?:speckub|["']speckub["'])\s*:/m.test(header) &&
+        !(/^specVersion\s*:/m.test(header) && /^kind\s*:\s*http\s*$/m.test(header))) return undefined;
+    return parseEndpointMarkdown(markdown);
+  }
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return undefined;
+  if (data.speckub === false) return undefined;
+  if (Object.hasOwn(data, 'speckub') ||
+      (Object.hasOwn(data, 'specVersion') && data.kind === 'http')) {
+    return parseEndpointMarkdown(markdown);
+  }
+  return undefined;
 }

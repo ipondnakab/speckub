@@ -5,6 +5,9 @@ description: Design or customize a project's SpecKub API documentation template 
 
 # Design a project documentation template
 
+Follow the [document discovery rules](../speckub-create/references/discovery.md) for repository-wide spec lookup,
+metadata markers, legacy compatibility, and template/example exclusions.
+
 Read repository instructions, `.speckub/templates/api.md`, and
 `.speckub/examples/api.md` when present. Also read the installed
 `../speckub-create/references/api-document.md` and `sequence-diagrams.md` for
@@ -27,6 +30,12 @@ file is the authoring layout used by create, validate, and clarify. Put design
 instructions in HTML comments and descriptive `{{placeholder}}` markers in fields
 to fill; this is an agent-readable template, not an executable rendering language.
 
+Use `speckub: false` in the stored template, and explain that create changes it to
+`speckub: true` in actual endpoint documents. Existing custom layouts without a
+marker remain usable: init preserves them, and create adds the marker only to
+its output. Custom headings, ordering, Markdown tables, and Mermaid fences are
+supported by the reader; required HTTP identity fields remain in frontmatter.
+
 Preserve SpecKub's frontmatter contract: `specVersion: 1`, stable `id`, `kind: http`,
 supported `method`, absolute route `path`, nonempty `summary`, and optional actual
 repository-relative `source` references. Do not add unsupported metadata or change
@@ -42,15 +51,16 @@ services, retry rules, response shapes, or deployment guarantees.
 ## Maintain the example and review
 
 Update `.speckub/examples/api.md` to demonstrate the chosen template with coherent
-synthetic data. Label it illustrative and keep it outside `docs/api/` so discovery
-does not mistake it for a real endpoint. Use literal valid frontmatter in the
+synthetic data. Label it illustrative, set `speckub: false`, and keep it in
+`.speckub/examples/` so repository-wide discovery does not list it as an endpoint. Use literal valid frontmatter in the
 example and omit `source` unless actual local evidence is intentionally supplied.
 Do not present fictional example behavior as repository truth or runtime-tested.
 The example teaches style; create must derive each real contract from source.
 
 Check that placeholders are intentional, frontmatter requirements remain usable,
 examples agree with the layout, and no executable template directives or secrets
-were introduced. Validate the example frontmatter with available schema tooling;
+were introduced. Validate the example contract with available schema tooling using an in-memory
+copy with `speckub: true` (keep the stored example opted out);
 the CLI's default docs discovery does not validate `.speckub/examples/`. Report
 what was actually checked, including Mermaid rendering if available.
 

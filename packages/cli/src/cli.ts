@@ -17,13 +17,16 @@ Usage:
   speckub inspect ID [--root DIR] [--docs-dir DIR] [--json]
   speckub validate --id ID [--root DIR] [--docs-dir DIR] [--json]
   speckub --help
+
+Discovery searches repository Markdown by default; --docs-dir narrows the search.
+init and scan use docs/api as the default authoring destination.
 `;
 
 type Options = {
   command: string;
   id?: string;
   root: string;
-  docsDir: string;
+  docsDir?: string;
   json: boolean;
   agents: Agent[];
   dryRun: boolean;
@@ -34,7 +37,7 @@ type Options = {
 
 function parseArgs(args: string[], cwd: string): Options {
   const [command = '--help', ...rest] = args;
-  const options: Options = { command, root: cwd, docsDir: 'docs/api', json: false, agents: [], dryRun: false, serve: false };
+  const options: Options = { command, root: cwd, json: false, agents: [], dryRun: false, serve: false };
   let positional: string | undefined;
   for (let i = 0; i < rest.length; i++) {
     const argument = rest[i];

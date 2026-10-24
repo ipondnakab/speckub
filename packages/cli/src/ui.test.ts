@@ -13,6 +13,7 @@ import { join } from 'node:path';
 import { request, type Server } from 'node:http';
 import { buildReader, serveReader } from './ui.js';
 import { runCli } from './cli.js';
+import { initProject } from './init.js';
 
 const directories: string[] = [];
 const servers: Server[] = [];
@@ -125,12 +126,90 @@ describe('standalone spec reader', () => {
   });
   it('rejects invalid specs before writing and supports an empty reader', async () => {
     const root = await setup();
-    await writeFile(join(root, 'docs/api/bad.md'), 'no frontmatter');
-    await expect(buildReader(root)).rejects.toThrow('frontmatter');
+    await writeFile(join(root, 'docs/api/bad.md'), '---\nspeckub: true\nsummary: [broken\n---');
+    await expect(buildReader(root)).rejects.toThrow('bad.md');
     await expect(access(join(root, '.speckub/site'))).rejects.toThrow();
     await rm(join(root, 'docs/api/bad.md'));
     await rm(join(root, 'docs/api/users.md'));
     expect((await buildReader(root)).endpoints).toBe(0);
+  });
+  it('exports specs across the repo, excludes its output, and honors an explicit directory', async () => {
+    const root = await setup();
+    await mkdir(join(root, 'services/orders'), { recursive: true });
+    await writeFile(join(root, 'services/orders/api.md'), spec('[Users](../../docs/api/users.md)').replace('users.get', 'orders.get').replace('specVersion: 1', 'speckub: true\nspecVersion: 1'));
+    await writeFile(join(root, 'README.md'), '# Readme');
+    const result = await buildReader(root, '.', 'reader');
+    expect(result.endpoints).toBe(2);
+    expect(embedded(await readFile(result.entry, 'utf8')).endpoints[1].html).toContain('href="#users.get"');
+    await writeFile(join(root, 'reader/copy.md'), spec());
+    expect((await buildReader(root, '.', 'reader')).endpoints).toBe(2);
+    expect((await buildReader(root, 'services', 'scoped-reader')).endpoints).toBe(1);
+    const output: string[] = [];
+    const io = { stdout: (s: string) => output.push(s), stderr: (s: string) => output.push(s) };
+    // Remove the deliberate duplicate outside the CLI's default output path.
+    await rm(join(root, 'reader/copy.md'));
+    expect(await runCli(['ui', '--json'], io, root)).toBe(0);
+    expect(JSON.parse(output[0]).endpoints).toBe(2);
+    output.length = 0;
+    expect(await runCli(['list', '--json'], io, root)).toBe(0);
+    expect(JSON.parse(output[0]).endpoints).toHaveLength(2);
+    expect(await runCli(['inspect', 'orders.get'], io, root)).toBe(0);
+    expect(await runCli(['validate', '--id', 'orders.get'], io, root)).toBe(0);
+  });
+  it('preserves a legacy custom template and renders its custom layout outside docs/api', async () => {
+    const root = await setup();
+    await rm(join(root, 'docs/api'), { recursive: true });
+    await mkdir(join(root, '.speckub/templates'), { recursive: true });
+    await mkdir(join(root, '.speckub/examples'), { recursive: true });
+    const layout = [
+      '# Team API contract',
+      '## Failure catalogue',
+      '| Status | Meaning |',
+      '| --- | --- |',
+      '| 404 | User missing |',
+      '## Team request journey',
+      '```mermaid',
+      'sequenceDiagram',
+      'Client->>API: GET /users',
+      'API-->>Client: 200',
+      '```',
+      '## Business purpose',
+      '{{team_description}}',
+      '### Owner notes',
+      'Contact the platform team.',
+    ].join('\n');
+    // These assets predate the marker and would be valid legacy candidates if
+    // the excluded .speckub tree were accidentally traversed.
+    const customTemplate = spec(layout);
+    const customExample = spec('Illustrative example, not a real API.');
+    const templatePath = join(root, '.speckub/templates/api.md');
+    const examplePath = join(root, '.speckub/examples/api.md');
+    await writeFile(templatePath, customTemplate);
+    await writeFile(examplePath, customExample);
+    await initProject(root, 'docs/api', ['codex']);
+    expect(await readFile(templatePath, 'utf8')).toBe(customTemplate);
+    expect(await readFile(examplePath, 'utf8')).toBe(customExample);
+    expect((await buildReader(root)).endpoints).toBe(0);
+
+    // Simulate the agent-authored artifact; init/UI do not generate contracts.
+    const document = customTemplate
+      .replace('specVersion: 1', 'speckub: true\nspecVersion: 1')
+      .replace('{{team_description}}', 'Find users for the support team.');
+    await mkdir(join(root, 'services/users/contracts'), { recursive: true });
+    await writeFile(join(root, 'services/users/contracts/api.md'), document);
+    const result = await buildReader(root);
+    expect(result.endpoints).toBe(1);
+    const endpoint = embedded(await readFile(result.entry, 'utf8')).endpoints[0];
+    expect(endpoint.file).toBe('services/users/contracts/api.md');
+    expect(endpoint.html).toContain('<table>');
+    expect(endpoint.html).toContain('class="mermaid"');
+    expect(endpoint.html).toContain('data-anchor="owner-notes"');
+    expect(endpoint.html).toContain('Find users for the support team.');
+    expect(endpoint.html.indexOf('Failure catalogue')).toBeLessThan(endpoint.html.indexOf('Business purpose'));
+    expect(endpoint.html).not.toContain('{{team_description}}');
+    expect(await readFile(templatePath, 'utf8')).toBe(customTemplate);
+    const io = { stdout: () => {}, stderr: () => {} };
+    expect(await runCli(['validate', '--id', 'users.get'], io, root)).toBe(0);
   });
   it('serves only generated assets on loopback and rejects arbitrary files and methods', async () => {
     const root = await setup();
