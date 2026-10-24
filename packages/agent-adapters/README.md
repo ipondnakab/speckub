@@ -1,6 +1,6 @@
 # AI-agent onboarding
 
-SpecKub works with existing coding agents through editable instruction templates. These are **templates**, not automatically installed integrations.
+SpecKub works with existing coding agents through portable skills, editable instructions, and host-specific command entrypoints. The CLI installs project-local files; it does not invoke a model.
 
 | Agent       | Template                             | Target in your repository   |
 | ----------- | ------------------------------------ | --------------------------- |
@@ -10,11 +10,15 @@ SpecKub works with existing coding agents through editable instruction templates
 
 ## Installation
 
-1. Copy the relevant template into your project at the target path above.
-2. If the target file exists, **merge instructions manually**; do not overwrite it.
-3. Adjust `docs/api` if your project stores specs elsewhere.
-4. Install/build the SpecKub CLI and verify `speckub list` works in your project.
-5. Ask the agent to inspect and update a real endpoint, then run `speckub validate --id <id>`.
+1. Install `@speckub/cli` as a development dependency in the project.
+2. Run `npx speckub init --agent codex|claude|cursor|all`, choosing one value.
+3. Open the initialized project folder in your agent and verify skill discovery.
+4. In Codex select `$speckub-scan`; Claude/Cursor command entrypoints use `/speckub.scan`.
+5. Review scan output, map relations, then create docs. AI review and correction are optional.
+
+Existing instructions and skills are preserved. Merge updates manually when a file
+is skipped. Manual template copying remains possible, but does not install the
+workflow skills by itself. See the [user story and nested-project troubleshooting](../../docs/user-story.md).
 
 ## AI documentation skills
 
@@ -33,7 +37,7 @@ are preserved. For agents without discovery, explicitly read the skill file.
 
 Scope may be a prompt, route prefix, service directory, or specific file. Skills
 adapt to the repository's framework/language and report uncertain discovery.
-Codex skill invocation uses `$speckub-scan`, `$speckub-relations`, `$speckub-create`, `$speckub-validate`,
+Codex skill invocation uses `$speckub-template`, `$speckub-scan`, `$speckub-relations`, `$speckub-create`, `$speckub-validate`,
 and `$speckub-clarify`. Slash command availability depends on the host agent.
 Terminal `speckub scan` prepares skills and prints a handoff prompt; AI runs in
 the user's agent. See the [CLI workflow guide](../cli/README.md).

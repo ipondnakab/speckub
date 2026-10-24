@@ -1,70 +1,132 @@
 # npm release preparation
 
-This repository contains three public npm packages at version `0.1.1`:
+## Current registry state
 
-1. `@speckub/schema`
-2. `@speckub/core` (depends on schema)
-3. `@speckub/cli` (depends on core)
+Verified against the public npm registry on 2026-10-25:
 
-## Prerequisites
+| Package           | Latest published version | Role                                                    |
+| ----------------- | ------------------------ | ------------------------------------------------------- |
+| `@speckub/schema` | `0.1.2`                  | HTTP schemas and Markdown-frontmatter parsing           |
+| `@speckub/core`   | `0.1.2`                  | Deterministic discovery and source-reference validation |
+| `@speckub/cli`    | `0.1.2`                  | Agent workflows, CLI checks, and standalone spec reader |
 
-- Confirm the `@speckub` npm organization/scope is available and the publisher has permission to publish packages in that scope.
-- Configure npm trusted publishing for each package to authorize GitHub repository `ipondnakab/speckub` and workflow `npm-publish.yml`. Trusted publishing must be supported by the npm/pnpm versions in the runner; otherwise revise the workflow to use a secure supported authentication method.
-- Create a protected GitHub Actions environment named `npm-release` and require manual approval.
-- Review versions and changelog before publishing. The workflow currently targets `0.1.1`; bump versions and the confirmation string together for future releases.
+All three packages are publicly available with the `latest` tag at `0.1.2`.
+Do not republish `0.1.0`, `0.1.1`, or `0.1.2`. Versions already used on npm cannot be reused. See
+[npm publish](https://docs.npmjs.com/cli/v11/commands/npm-publish/).
 
-## Dry-run
+## Released 0.1.2
 
-Run **Actions → Publish npm packages → Run workflow** with the default `dry-run` confirmation. It runs frozen-lockfile installation, lint, typecheck, tests, build and package archive inspection without publishing.
+The approved release updated `@speckub/schema`, `@speckub/core`, and
+`@speckub/cli` together to `0.1.2`. It includes the standalone `ui` reader,
+renderer dependencies, npm-facing READMEs, and explicit package descriptions.
+The source manifests, archive checks, and workflow confirmation now use `0.1.2`.
+Downloaded registry archives matched the inspected release files by SHA-256.
+A fresh npm installation verified all three versions plus CLI help, initialization,
+listing, inspection, validation, and reader export. The published source is
+commit `7370fbf3d3a28c13c2537cea30321bdc853e888b` in
+[PR #16](https://github.com/ipondnakab/speckub/pull/16).
 
-## Publish
+The maintainer explicitly requested a version bump and public npm publication.
+Publication used the existing maintainer login and inspected local archives;
+it did not trigger the production Actions workflow or merge a pull request.
+Source changes remain on the feature branch for review. The workflow still has
+the historical `publish-0.1.2` gate; do not trigger it now that this version exists.
+Update versions and the gate together when preparing a later approved release.
 
-After reviewing the dry-run and package archives, invoke the workflow with `publish-0.1.1`. It publishes schema, core and CLI in dependency order. **This is a real external release**; do not invoke without approval.
+Changing a local README or `description` does not update the npm page. The reviewed
+README and metadata must be included in a new approved package publication. Do not
+create a token or attempt to overwrite an existing version to update documentation.
 
-## Local package smoke test
+## Prepare later candidates
+
+1. Review desired code/documentation through a pull request; never merge automatically.
+2. Select a fresh version. Update each package being released, internal dependency
+   expectations, archive checks, workflow tarball paths, and confirmation string.
+3. Check registry availability for the exact candidate versions before publishing.
+4. Build and inspect archives from the exact reviewed revision. Actions checks out
+   `main`, so its source changes must be merged by the maintainer before that path.
+5. Verify the intended npm publisher or per-package Trusted Publishing configuration.
+6. Obtain explicit approval for the named packages and candidate versions.
+
+The private workspace root stays at `0.0.0` and is not published. Internal
+`workspace:^` dependencies pack as semver ranges derived from workspace package
+versions. A version-only bump does not change the lockfile's linked workspace
+entries, but dependency changes (including the reader renderers) require a matching
+lockfile. Validate with a frozen-lockfile installation.
+
+## Local checks and archive inspection
 
 ```sh
 pnpm install --frozen-lockfile
+pnpm lint
+pnpm typecheck
+pnpm test
 pnpm build
-pnpm --filter @speckub/cli pack
+bash .github/scripts/verify-packages.sh
 ```
 
-Check that the CLI tarball includes `dist/bin.js`, `dist/init.js`, `dist/scan.js`, all six workflow skills, their references, and the editable document template/example. Run `bash .github/scripts/verify-packages.sh` after building to inspect all three archives. Workspace protocol dependencies are converted to semver ranges in packed manifests.
+The script generates archives labeled `0.1.2`. The workflow uses those same
+archive names. Publish only the exact inspected archives after approval, and
+never replace a package version already accepted by npm.
 
-This PR prepares publishing; no packages have been published by this change.
+Inspect packed manifests for versions, explicit descriptions, repository metadata,
+public access, license, engines, CLI bin, and converted internal dependency ranges.
+Verify READMEs use npm installation commands and absolute repository links that
+exist on the referenced revision. Clearly identify the version required for each
+feature; installed `0.1.1` users must upgrade to `0.1.2` before running `ui`.
 
-## First publication and Trusted Publishing
+The CLI archive should include:
 
-**Important:** Verify each package exists on npm before relying on Trusted Publishing. If a package still requires its first publication, use an authorized npm maintainer with 2FA to publish the reviewed release candidate after explicit approval. Configure its Trusted Publisher only after bootstrap. Do **not** trigger `publish-0.1.1` until all three packages have the required trust configuration and the release has been explicitly approved.
+- `dist/bin.js`, `dist/init.js`, `dist/scan.js`, and the new `dist/ui.js`.
+- All six skills, document/diagram references, and editable template/example.
+- Reader HTML, JavaScript, CSS, and redistribution notices.
+- Runtime dependencies on core, Markdown-it, and Mermaid Tiny in its manifest.
 
-After the first publication, configure Trusted Publisher individually for all three packages in npm → Package → Settings → Trusted Publisher:
+Smoke-test a packed CLI in a temporary project, including initialization and reader
+export. Confirm the reader is offline/self-contained and source files are not copied.
+Record browser visual/diagram checks separately; a structural test does not prove
+browser rendering. No packages should be published as part of these checks.
+
+## GitHub release protection
+
+Before a real Actions release, verify the `npm-release` environment allows only
+branch `main`, requires the intended reviewer, and disables administrator bypass.
+Keep self-review allowed if the sole reviewer also starts the workflow. Check that
+the workflow identity and checked-out revision match the reviewed release source.
+Do not create/merge a release or trigger production publishing as a documentation task.
+
+## Trusted Publishing for subsequent releases
+
+All three packages now exist, so configure trust individually for the next release.
+The current trust settings have not been verified by this documentation check.
+
+In each package's npm Settings → Trusted Publisher, use:
 
 - GitHub owner: `ipondnakab`
 - Repository: `speckub`
-- Workflow filename: `npm-publish.yml`
-- GitHub environment: `npm-release` (must match exactly)
-- Allow direct `npm publish` if using this workflow.
+- Workflow filename: `npm-publish.yml` (filename only)
+- GitHub environment: `npm-release`
+- Direct `npm publish` allowed if retaining the repository's current publish commands
 
-npm requires a successful first OIDC publish within two days of configuring each trust relationship. Prepare the next version and its review before enabling trust. The workflow installs an OIDC-capable npm CLI and publishes previously inspected tarballs using `npm publish`. Keep the protected GitHub environment and require reviewers.
+Use GitHub-hosted runners with npm CLI 11.5.1 or newer and Node 22.14.0 or newer.
+Configure trust when the approved next release is ready: a new trust relationship
+must complete its first successful publication within two days. Recreate expired
+trust rather than assuming an old setup remains valid. See
+[npm Trusted Publishing](https://docs.npmjs.com/trusted-publishers/).
 
-**Do not attempt to republish version 0.1.0.** npm versions are immutable once published. Bump all package versions, update the lockfile and confirmation gate, and run a new dry-run before a subsequent OIDC release.
+If trust is not ready, an explicitly approved maintainer publication can use the
+reviewed archives and interactive npm authentication/2FA. Publish schema, core,
+then CLI, checking dependency availability before consumer installation. Do not
+print or share authentication links, passwords, tokens, or 2FA codes.
 
-Reference: https://docs.npmjs.com/trusted-publishers/
+## Post-publication verification
 
-## Version 0.1.1
+For each exact released version, confirm registry metadata and the intended tag,
+then install the CLI in a fresh project and run `--help` and `init`. For a release
+that includes `ui`, verify export and local preview as well. Do not infer completion
+from a GitHub merge, successful CI, or only the npm website's cached listing.
 
-All three packages release together at `0.1.1`. The root workspace remains private
-at `0.0.0`; it is not published. Internal `workspace:^` dependencies pack as
-`^0.1.1`. Package version numbers are not recorded in the lockfile for linked
-workspace dependencies, so this version-only change does not require lockfile edits.
-
-The release adds the agent workflow (scan, relations, create, optional validate
-and clarify), a template-design skill, editable project templates/examples,
-detailed API document guidance, and Mermaid sequence-diagram guidance. Existing
-project customizations are preserved. Agent work runs in the user's coding agent;
-the terminal scan command prepares the handoff. Structural validation remains
-separate from AI review and Mermaid rendering.
-
-The publish confirmation is `publish-0.1.1`, and inspected archives must be named
-`speckub-schema-0.1.1.tgz`, `speckub-core-0.1.1.tgz`, and
-`speckub-cli-0.1.1.tgz`. Preparing this version does not authorize publishing it.
+An accepted publish may still be processing before it is installable. Recheck the
+exact version with `npm view ... --prefer-online`; do not republish an accepted
+version merely because an immediate lookup returns 404. Investigate prolonged
+delays through npm's package/account notices and support.
