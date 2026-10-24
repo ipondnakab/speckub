@@ -2,32 +2,36 @@
 
 ## Current registry state
 
-Verified against the public npm registry on 2026-10-24:
+Verified against the public npm registry on 2026-10-25:
 
 | Package           | Latest published version | Role                                                    |
 | ----------------- | ------------------------ | ------------------------------------------------------- |
-| `@speckub/schema` | `0.1.1`                  | HTTP schemas and Markdown-frontmatter parsing           |
-| `@speckub/core`   | `0.1.1`                  | Deterministic discovery and source-reference validation |
-| `@speckub/cli`    | `0.1.1`                  | CLI setup/checks and six agent workflow skills          |
+| `@speckub/schema` | `0.1.2`                  | HTTP schemas and Markdown-frontmatter parsing           |
+| `@speckub/core`   | `0.1.2`                  | Deterministic discovery and source-reference validation |
+| `@speckub/cli`    | `0.1.2`                  | Agent workflows, CLI checks, and standalone spec reader |
 
-First publication is complete for all three packages. Do not republish `0.1.0` or
-`0.1.1`. Package versions already used on npm cannot be reused. See
+All three packages are publicly available with the `latest` tag at `0.1.2`.
+Do not republish `0.1.0`, `0.1.1`, or `0.1.2`. Versions already used on npm cannot be reused. See
 [npm publish](https://docs.npmjs.com/cli/v11/commands/npm-publish/).
 
-## Release candidate 0.1.2
+## Released 0.1.2
 
-The approved candidate updates `@speckub/schema`, `@speckub/core`, and
+The approved release updated `@speckub/schema`, `@speckub/core`, and
 `@speckub/cli` together to `0.1.2`. It includes the standalone `ui` reader,
 renderer dependencies, npm-facing READMEs, and explicit package descriptions.
 The source manifests, archive checks, and workflow confirmation now use `0.1.2`.
-The registry table above records the state before this release; an approved
-publication still needs registry and consumer-install verification.
+Downloaded registry archives matched the inspected release files by SHA-256.
+A fresh npm installation verified all three versions plus CLI help, initialization,
+listing, inspection, validation, and reader export. The published source is
+commit `7370fbf3d3a28c13c2537cea30321bdc853e888b` in
+[PR #16](https://github.com/ipondnakab/speckub/pull/16).
 
 The maintainer explicitly requested a version bump and public npm publication.
-This release uses the existing maintainer login and inspected local archives;
-it does not trigger the production Actions workflow or merge a pull request.
-Keep source changes on the feature branch for review. The Actions gate for a
-future run is `publish-0.1.2`; do not rerun it after this version is accepted.
+Publication used the existing maintainer login and inspected local archives;
+it did not trigger the production Actions workflow or merge a pull request.
+Source changes remain on the feature branch for review. The workflow still has
+the historical `publish-0.1.2` gate; do not trigger it now that this version exists.
+Update versions and the gate together when preparing a later approved release.
 
 Changing a local README or `description` does not update the npm page. The reviewed
 README and metadata must be included in a new approved package publication. Do not
