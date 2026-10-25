@@ -15,14 +15,14 @@ UI, event, or architecture specification types.
 Run from the directory that should own `.agents/`, `.speckub/`, and `docs/api/`:
 
 ```sh
-npm install --save-dev @speckub/cli@0.1.3
+npm install --save-dev @speckub/cli@0.1.4
 npx speckub init --agent codex
 ```
 
 Or use Yarn consistently with an existing Yarn project:
 
 ```sh
-yarn add --dev @speckub/cli@0.1.3 --registry https://registry.npmjs.org
+yarn add --dev @speckub/cli@0.1.4 --registry https://registry.npmjs.org
 yarn speckub init --agent codex
 ```
 
