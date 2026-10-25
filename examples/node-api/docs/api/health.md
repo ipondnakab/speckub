@@ -1,4 +1,5 @@
 ---
+speckub: true
 specVersion: 1
 id: health.get
 kind: http
@@ -7,118 +8,119 @@ path: /health
 summary: Check API health
 source:
   - server.mjs
+  - server.test.mjs
 ---
 
 # Check API health
 
 ## Overview
 
-Return a static response showing that the local example server can handle this
-request. This is a liveness-style example, not a dependency readiness check.
+Return the static liveness response.
 
 ## Contract
 
-| Property              | Value                                  |
-| --------------------- | -------------------------------------- |
-| Method                | GET                                    |
-| Route                 | `/health`                              |
-| Local base URL        | `http://127.0.0.1:3100` (default port) |
-| Request body          | Not required or read by the handler    |
-| Response content type | `application/json`                     |
-| API version           | No version negotiation implemented     |
+| Property            | Value                                  |
+| ------------------- | -------------------------------------- |
+| Method and route    | `GET /health`                          |
+| Local base URL      | `http://127.0.0.1:3100` (default port) |
+| Request media type  | No request body                        |
+| Response media type | `application/json`                     |
+| Version             | No API version negotiation             |
 
 ## Authentication and authorization
 
-No authentication or authorization is implemented in this loopback-only example
-server. No production gateway or deployment policy is supplied.
+No authentication or authorization middleware is implemented. Parent IDs scope
+lookup; they are not a substitute for permission checks in a real application.
+The server is loopback-only and includes no production gateway.
 
 ## Request
 
-No path parameters, application-specific headers, or body fields are required.
-Query parameters are ignored. Only the exact pathname `/health` matches;
-`/health/` falls through to the server's 404 response.
+No path parameters or body fields are required.
+
+Query parameters are ignored. Paths match exactly; trailing slashes and extra
+segments do not match. Path segments are compared without explicit percent-decoding.
+
+No request body. The handler does not parse a body or require a content type.
 
 ## Responses
 
-| Status | Condition                     | Body                 |
-| ------ | ----------------------------- | -------------------- |
-| 200    | GET request matches `/health` | `{ "status": "ok" }` |
+| Status | Condition       | Body              |
+| ------ | --------------- | ----------------- |
+| 200    | Matched request | JSON result below |
 
-| Field  | Type   | Required / nullable                 | Meaning                  |
-| ------ | ------ | ----------------------------------- | ------------------------ |
-| status | string | Present, non-null; fixed value `ok` | Static success indicator |
+| Field  | Type   | Required / nullable | Meaning                 |
+| ------ | ------ | ------------------- | ----------------------- |
+| status | string | Present, non-null   | Static health indicator |
 
-`Content-Type` is `application/json`. Pagination is not applicable.
+JSON responses use `Content-Type: application/json`.
 
 ## Errors
 
-| Status | Machine code | Message     | Trigger                                  | Caller action           |
-| ------ | ------------ | ----------- | ---------------------------------------- | ----------------------- |
-| 404    | Not provided | `Not found` | Unsupported method or unmatched pathname | Correct the method/path |
+| Status | Message   | Trigger               | Caller action                     |
+| ------ | --------- | --------------------- | --------------------------------- |
+| 404    | Not found | Unmatched method/path | Correct the route and HTTP method |
 
-The matched health handler has no application-specific failure branch. A 200
-response does not establish that any external dependency is healthy.
+Errors have the shape `{ "error": "message" }`; no separate machine code is
+provided. Unsupported method/path combinations use fallback 404, not 405.
 
 ## Behavior
 
-Return the static JSON body and end the response. No state is read or changed;
-there are no dependency calls or events. Repeated matched requests return the
-same body. The server does not implement readiness checks.
+Return the static liveness response.
+
+This does not check external dependencies or readiness.
+This operation does not mutate state. Results can change when other CRUD requests
+modify the same server process.
 
 ## Relationships
 
-No upstream application caller is defined. Inspection of `server.mjs` found no
-downstream dependency for this endpoint; no database or service checks occur.
+No database, external service, event bus, or upstream application caller is
+defined by this standalone playground. All storage is local to this server process.
+
+The endpoint reads no application state.
 
 ## Request flow
 
 ```mermaid
 sequenceDiagram
     actor Client
-    participant API as Example API server
+    participant API as Playground handler (in-memory state)
     Client->>API: GET /health
-    API-->>Client: 200 JSON status ok
+    API->>API: Return static status
+    API-->>Client: 200 JSON result
 ```
 
 ## Examples
 
-After starting `node server.mjs` from the example directory:
+Start `node examples/node-api/server.mjs` from the repository root. These
+examples assume fresh seeded state and the default port; earlier mutations can
+change the result.
 
 ```sh
 curl -i http://127.0.0.1:3100/health
 ```
 
-Expected status: 200. Body:
+Expected status: 200.
 
 ```json
-{ "status": "ok" }
-```
-
-An unsupported method uses the fallback response:
-
-```sh
-curl -i -X POST http://127.0.0.1:3100/health
-```
-
-Expected status: 404. Body:
-
-```json
-{ "error": "Not found" }
+{
+  "status": "ok"
+}
 ```
 
 ## Limits and operations
 
-The handler configures no application rate limit, payload limit, explicit timeout,
-or performance target. Runtime defaults are not specified here. The server uses
-loopback address `127.0.0.1`; `PORT` overrides the default 3100. Examples assume
-the default port and contain no credentials.
+The server binds to `127.0.0.1`; `PORT` overrides the default 3100. Data resets
+when the process restarts. There is no persistence, authentication middleware,
+rate limit, application timeout, or performance guarantee. Runtime HTTP defaults
+are not specified here. This is a local test fixture, not a production service.
 
 ## Evidence and verification
 
-- `server.mjs`: the `createServer` callback, GET `/health` branch, shared content
-  type, fallback response, and listening configuration.
-- CLI structural/reference checks do not establish endpoint semantics; the CLI's
-  semantic check remains `skipped`.
-- Success and unsupported-method examples were exercised against the local server
-  during development. Production deployment behavior was not tested.
-- Mermaid syntax is source-reviewed; rendering has not been tested.
+- `server.mjs`: `createExampleServer`, the `GET` registration for `/health`,
+  its handler, scoped lookup helpers, `send`, and the in-memory seed.
+- `server.test.mjs`: local HTTP integration checks exercise user CRUD, nested task
+  CRUD/comments, missing parents, validation, content type, body size, and health.
+- These checks cover this playground locally; no deployment behavior is claimed.
+- CLI structural/reference checks are separate; CLI semantic checks remain `skipped`.
+- The success/error HTTP examples were exercised against fresh local servers.
+- The sequence diagram rendered successfully in the local reader during development.

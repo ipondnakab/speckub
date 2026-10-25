@@ -1,4 +1,5 @@
 ---
+speckub: true
 specVersion: 1
 id: users.get-by-id
 kind: http
@@ -7,146 +8,144 @@ path: /api/users/{id}
 summary: Get an example user by ID
 source:
   - server.mjs
+  - server.test.mjs
 ---
 
 # Get an example user by ID
 
 ## Overview
 
-Retrieve a user from the playground's fixed, in-memory dataset. This example
-contains only `{ "id": "1", "name": "Ada" }`; it does not query a database.
+Find the user by exact ID in the in-process users Map.
 
 ## Contract
 
-| Property              | Value                                                |
-| --------------------- | ---------------------------------------------------- |
-| Method                | GET                                                  |
-| Route                 | `/api/users/{id}`                                    |
-| Local base URL        | `http://127.0.0.1:3100` (default port)               |
-| Request body          | Not required; the handler does not read it           |
-| Response content type | `application/json`                                   |
-| API version           | No version prefix or version negotiation implemented |
+| Property            | Value                                  |
+| ------------------- | -------------------------------------- |
+| Method and route    | `GET /api/users/{id}`                  |
+| Local base URL      | `http://127.0.0.1:3100` (default port) |
+| Request media type  | No request body                        |
+| Response media type | `application/json`                     |
+| Version             | No API version negotiation             |
 
 ## Authentication and authorization
 
-The example server has no authentication or authorization middleware. It binds to
-`127.0.0.1` and is intended for local testing. No production gateway is included.
+No authentication or authorization middleware is implemented. Parent IDs scope
+lookup; they are not a substitute for permission checks in a real application.
+The server is loopback-only and includes no production gateway.
 
 ## Request
 
-| Field | Location | Type   | Required / nullable | Constraints / default                                       | Meaning                                  |
-| ----- | -------- | ------ | ------------------- | ----------------------------------------------------------- | ---------------------------------------- |
-| id    | Path     | string | Required; nonempty  | One nonempty path segment; no numeric validation or default | Compared exactly with the stored user ID |
+| Field | Location | Type   | Required / nullable | Constraints / default            | Meaning |
+| ----- | -------- | ------ | ------------------- | -------------------------------- | ------- |
+| id    | Path     | string | Required, non-null  | One nonempty segment; no default | User ID |
 
-No application-specific request headers are required. Query parameters are ignored.
-The handler uses the URL pathname without an explicit decode step for the ID.
-A trailing slash or extra segment does not match this route.
+Query parameters are ignored. Paths match exactly; trailing slashes and extra
+segments do not match. Path segments are compared without explicit percent-decoding.
+
+No request body. The handler does not parse a body or require a content type.
 
 ## Responses
 
-| Status | Condition                               | Body                            |
-| ------ | --------------------------------------- | ------------------------------- |
-| 200    | Stored ID matches the requested segment | JSON user object                |
-| 404    | Route matches but the ID is unknown     | `{ "error": "User not found" }` |
+| Status | Condition                                                    | Body              |
+| ------ | ------------------------------------------------------------ | ----------------- |
+| 200    | Matched request with valid fields and existing parent/record | JSON result below |
+| 404    | User not found                                               | JSON error object |
 
-Successful response fields:
+| Field | Type   | Required / nullable | Meaning             |
+| ----- | ------ | ------------------- | ------------------- |
+| id    | string | Present, non-null   | Resource identifier |
+| name  | string | Present, non-null   | Display name        |
 
-| Field | Type   | Required / nullable                    | Meaning         |
-| ----- | ------ | -------------------------------------- | --------------- |
-| id    | string | Present, non-null in the fixed dataset | User identifier |
-| name  | string | Present, non-null in the fixed dataset | Display name    |
-
-The handler sets `Content-Type: application/json` for all responses. Pagination
-is not applicable because this endpoint returns at most one user.
+JSON responses use `Content-Type: application/json`.
 
 ## Errors
 
-| Status | Machine code | Message          | Trigger                                              | Caller action                                                        |
-| ------ | ------------ | ---------------- | ---------------------------------------------------- | -------------------------------------------------------------------- |
-| 404    | Not provided | `User not found` | A matched ID is not in the dataset                   | Use an existing ID; retrying the same request does not create a user |
-| 404    | Not provided | `Not found`      | Route shape does not match, or the method is not GET | Correct the method/path                                              |
+| Status | Message        | Trigger                          | Caller action                               |
+| ------ | -------------- | -------------------------------- | ------------------------------------------- |
+| 404    | User not found | Selected parent/record is absent | Use IDs from the matching parent collection |
+| 404    | Not found      | Unmatched method/path            | Correct the route and HTTP method           |
 
-The server uses a fallback 404 for unsupported methods, not 405. It does not
-implement additional application error envelopes or a retry policy.
+Errors have the shape `{ "error": "message" }`; no separate machine code is
+provided. Unsupported method/path combinations use fallback 404, not 405.
 
 ## Behavior
 
-1. Match a GET request with exactly one segment after `/api/users/`.
-2. Find the first user whose stored ID equals the requested segment.
-3. Return the user with 200, or the missing-user error with 404.
+Find the user by exact ID in the in-process users Map.
 
-This is a read-only lookup with no state mutation, event publication, or external
-calls. Repeated requests against the same process dataset return the same result.
+The seed contains user 1 (Ada). CRUD operations can change or delete users during this process.
+This operation does not mutate state. Results can change when other CRUD requests
+modify the same server process.
 
 ## Relationships
 
-| Target                 | Interaction      | Trigger / condition | Failure behavior                       |
-| ---------------------- | ---------------- | ------------------- | -------------------------------------- |
-| In-process users array | Read-only lookup | Matched GET request | Missing ID produces the documented 404 |
+No database, external service, event bus, or upstream application caller is
+defined by this standalone playground. All storage is local to this server process.
 
-No upstream application callers are defined in this standalone example. Inspection
-of `server.mjs` found no downstream service, database, or event infrastructure.
+The endpoint uses the shared in-process users Map.
 
 ## Request flow
 
 ```mermaid
 sequenceDiagram
     actor Client
-    participant API as User API handler
+    participant API as Playground handler (in-memory state)
     Client->>API: GET /api/users/{id}
-    API->>API: Look up ID in memory
-    alt User exists
-        API-->>Client: 200 JSON user
-    else User missing
-        API-->>Client: 404 User not found
+    API->>API: Resolve scope and validate request fields
+    alt Valid request and known parents or record
+        API->>API: Read user
+        API-->>Client: 200 JSON result
+    else Missing resource or invalid request
+        API-->>Client: Documented JSON error
     end
 ```
 
-The diagram covers the matched endpoint. Requests that fail method/path matching
-receive the server's fallback 404 before the lookup.
-
 ## Examples
 
-Start the local server with `node server.mjs` from this example directory.
-These examples use the default port; use the configured port if `PORT` is set.
-
-Successful lookup:
+Start `node examples/node-api/server.mjs` from the repository root. These
+examples assume fresh seeded state and the default port; earlier mutations can
+change the result.
 
 ```sh
 curl -i http://127.0.0.1:3100/api/users/1
 ```
 
-Expected status: 200. Body:
+Expected status: 200.
 
 ```json
-{ "id": "1", "name": "Ada" }
+{
+  "id": "1",
+  "name": "Ada"
+}
 ```
 
-Unknown user:
+Missing-resource example:
 
 ```sh
-curl -i http://127.0.0.1:3100/api/users/unknown
+curl -i http://127.0.0.1:3100/api/users/missing
 ```
 
-Expected status: 404. Body:
+Expected status: 404.
 
 ```json
-{ "error": "User not found" }
+{
+  "error": "User not found"
+}
 ```
 
 ## Limits and operations
 
-The handler defines no application rate limit, request-body limit, explicit
-timeout, or performance guarantee. Runtime HTTP defaults are not specified here.
-The dataset is fixed in source and is not persisted externally. `PORT` selects
-the listening port; its default is 3100. The server listens only on loopback.
+The server binds to `127.0.0.1`; `PORT` overrides the default 3100. Data resets
+when the process restarts. There is no persistence, authentication middleware,
+rate limit, application timeout, or performance guarantee. Runtime HTTP defaults
+are not specified here. This is a local test fixture, not a production service.
 
 ## Evidence and verification
 
-- `server.mjs`: `users`, the `createServer` callback, GET route matcher, lookup,
-  fallback response, and `server.listen` configuration.
-- CLI structural/reference validation is separate from source review; semantic
-  checks remain `skipped`.
-- The success and missing-user examples were exercised against the local server
-  during development. Deployment behavior outside this example was not tested.
-- Mermaid syntax is source-reviewed; rendering has not been tested.
+- `server.mjs`: `createExampleServer`, the `GET` registration for `/api/users/{id}`,
+  its handler, scoped lookup helpers, `send`, and the in-memory seed.
+- `server.test.mjs`: local HTTP integration checks exercise user CRUD, nested task
+  CRUD/comments, missing parents, validation, content type, body size, and health.
+- These checks cover this playground locally; no deployment behavior is claimed.
+- CLI structural/reference checks are separate; CLI semantic checks remain `skipped`.
+- The success/error HTTP examples were exercised against fresh local servers.
+- The sequence diagram rendered successfully in the local reader during development.
