@@ -43,7 +43,45 @@ if (globalThis.mermaid)
       'suppressErrorRendering',
     ],
   });
-function list() {
+const collapsedPaths = new Set();
+let treeFiltered = false;
+function pathTree(endpoints) {
+  const root = { path: '', children: new Map(), endpoints: [], count: 0 };
+  for (const endpoint of [...endpoints].sort(
+    (a, b) =>
+      a.path.localeCompare(b.path) ||
+      a.method.localeCompare(b.method) ||
+      a.id.localeCompare(b.id),
+  )) {
+    let branch = root;
+    branch.count++;
+    const segments =
+      endpoint.path === '/' ? [] : endpoint.path.slice(1).split('/');
+    for (const segment of segments) {
+      const path = branch.path + '/' + segment;
+      if (!branch.children.has(segment))
+        branch.children.set(segment, {
+          segment,
+          path,
+          children: new Map(),
+          endpoints: [],
+          count: 0,
+        });
+      branch = branch.children.get(segment);
+      branch.count++;
+    }
+    branch.endpoints.push(endpoint);
+  }
+  return root;
+}
+function list(revealSelected = false) {
+  if (!treeFiltered) {
+    for (const group of nav.querySelectorAll('details[data-path]')) {
+      if (group.open) collapsedPaths.delete(group.dataset.path);
+      else collapsedPaths.add(group.dataset.path);
+    }
+  }
+  treeFiltered = Boolean(search.value.trim() || method.value);
   nav.replaceChildren();
   const query = search.value.trim().toLowerCase();
   const selectedId = decodeHash()[0];
@@ -52,7 +90,8 @@ function list() {
       (!method.value || e.method === method.value) &&
       (!query || e.search.includes(query)),
   );
-  for (const endpoint of matches) {
+  const selectedPath = data.endpoints.find((e) => e.id === selectedId)?.path;
+  function renderEndpoint(endpoint, container) {
     const link = node('a', undefined, 'endpoint-link');
     link.href = '#' + encodeURIComponent(endpoint.id);
     if (selectedId === endpoint.id) link.setAttribute('aria-current', 'page');
@@ -62,8 +101,42 @@ function list() {
       node('span', endpoint.path, 'nav-route'),
     );
     link.append(row, node('span', endpoint.summary, 'nav-summary'));
-    nav.append(link);
+    link.title = endpoint.method + ' ' + endpoint.path;
+    container.append(link);
   }
+  function renderBranch(branch, container) {
+    for (const endpoint of branch.endpoints)
+      renderEndpoint(endpoint, container);
+    for (const child of branch.children.values()) {
+      if (!child.children.size) {
+        for (const endpoint of child.endpoints)
+          renderEndpoint(endpoint, container);
+        continue;
+      }
+      if (
+        revealSelected &&
+        (selectedPath === child.path ||
+          selectedPath?.startsWith(child.path + '/'))
+      ) {
+        collapsedPaths.delete(child.path);
+      }
+      const group = node('details', undefined, 'path-group');
+      group.dataset.path = child.path;
+      group.open =
+        Boolean(query || method.value) || !collapsedPaths.has(child.path);
+      const label = node('summary', undefined, 'path-group-label');
+      label.title = child.path;
+      label.append(
+        node('span', child.segment || '/', 'path-segment'),
+        node('span', child.count, 'path-count'),
+      );
+      const children = node('div', undefined, 'path-children');
+      renderBranch(child, children);
+      group.append(label, children);
+      container.append(group);
+    }
+  }
+  renderBranch(pathTree(matches), nav);
   document.getElementById('result-count').textContent = matches.length;
   document.getElementById('no-results').hidden = matches.length > 0;
 }
@@ -82,7 +155,7 @@ async function show() {
     : data.endpoints[0];
   detail.replaceChildren();
   toc.replaceChildren();
-  list();
+  list(true);
   if (!endpoint) {
     detail.append(
       node('h2', id ? 'Endpoint not found' : 'No specifications yet'),
@@ -97,7 +170,7 @@ async function show() {
   }
   if (!id) {
     history.replaceState(null, '', '#' + encodeURIComponent(endpoint.id));
-    list();
+    list(true);
   }
   const header = node('div', undefined, 'endpoint-header');
   header.append(
@@ -187,7 +260,7 @@ async function show() {
     }
   }
 }
-search.addEventListener('input', list);
-method.addEventListener('change', list);
+search.addEventListener('input', () => list());
+method.addEventListener('change', () => list());
 window.addEventListener('hashchange', show);
 show();

@@ -572,3 +572,37 @@ h1 {
     break-inside: avoid;
   }
 }
+
+/* Path hierarchy uses native details/summary for keyboard-accessible disclosure. */
+.path-group {
+  min-width: 0;
+}
+.path-group-label {
+  cursor: pointer;
+  padding: 9px 5px;
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+  color: var(--ink);
+}
+.path-group-label::marker {
+  color: var(--accent);
+}
+.path-segment {
+  margin-left: 3px;
+}
+.path-count {
+  float: right;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 10px;
+  color: var(--muted);
+  margin: 2px 0 0 8px;
+}
+.path-children {
+  margin-left: 7px;
+  padding-left: 7px;
+  border-left: 1px solid var(--line);
+}
+.path-children .endpoint-link {
+  padding: 10px 6px;
+}
