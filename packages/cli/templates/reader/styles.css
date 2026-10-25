@@ -606,3 +606,38 @@ h1 {
 .path-children .endpoint-link {
   padding: 10px 6px;
 }
+
+.navigation-settings {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+  margin-top: 14px;
+}
+.navigation-settings label {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.navigation-settings select,
+.navigation-settings input {
+  width: 100%;
+  margin: 0;
+  min-width: 0;
+  font-size: 12px;
+  padding: 9px 10px;
+}
+.navigation-settings:has(#tree-depth-setting[hidden]) {
+  grid-template-columns: minmax(0, 1fr);
+}
+.nav-route,
+.nav-summary {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.endpoint-row {
+  align-items: flex-start;
+}

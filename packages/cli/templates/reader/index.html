@@ -52,6 +52,27 @@
         <select id="method">
           <option value="">All methods</option>
         </select>
+        <div class="navigation-settings">
+          <div>
+            <label for="navigation-view">View</label
+            ><select id="navigation-view">
+              <option value="list">List</option>
+              <option value="tree">Tree</option>
+            </select>
+          </div>
+          <div id="tree-depth-setting" hidden>
+            <label for="tree-depth">Max tree layers</label
+            ><input
+              id="tree-depth"
+              type="number"
+              min="1"
+              max="12"
+              step="1"
+              value="2"
+              title="Maximum visible folder levels (1–12)"
+            />
+          </div>
+        </div>
         <div class="nav-heading">
           <span>ENDPOINTS</span
           ><span id="result-count" aria-live="polite"></span>
