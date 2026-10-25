@@ -306,6 +306,14 @@ endpoint/content search, method filters, section navigation, tables, code, and
 bundled Mermaid Tiny diagrams with a source fallback. Invalid/duplicate specs
 fail export; no discovered endpoints yields an empty-state page.
 
+Use **View** in the sidebar to switch between **List** (the default) and **Tree**.
+Tree view starts with **2** folder layers; set **Max tree layers** to any integer
+from **1–12**. Routes below that limit remain listed under the last visible group.
+Long labels abbreviate middle path segments; the full route is available in the
+endpoint document and label tooltip. Search and method filters apply in both views.
+The reader remembers view/depth on this browser when storage is available; file
+exports and browsers that deny storage still work with in-memory settings.
+
 `--docs-dir DIR` limits the input to that directory. `--out DIR` must be a dedicated directory
 inside the project, outside any explicitly selected docs directory, without
 symlinked output paths. For a repository-wide search, the output is excluded. Nonempty

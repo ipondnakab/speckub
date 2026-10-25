@@ -43,6 +43,41 @@ if (globalThis.mermaid)
       'suppressErrorRendering',
     ],
   });
+const navigationView = document.getElementById('navigation-view');
+const treeDepth = document.getElementById('tree-depth');
+let preferences = { view: 'list', depth: 2 };
+try {
+  const stored = JSON.parse(
+    localStorage.getItem('speckub-reader-navigation') ?? 'null',
+  );
+  if (stored?.view === 'tree') preferences.view = 'tree';
+  if (
+    Number.isInteger(stored?.depth) &&
+    stored.depth >= 1 &&
+    stored.depth <= 12
+  )
+    preferences.depth = stored.depth;
+} catch {
+  /* File URLs and privacy settings may block storage. */
+}
+navigationView.value = preferences.view;
+treeDepth.value = String(preferences.depth);
+function updateNavigation() {
+  preferences = {
+    view: navigationView.value === 'tree' ? 'tree' : 'list',
+    depth: Math.min(12, Math.max(1, Math.trunc(Number(treeDepth.value)) || 2)),
+  };
+  treeDepth.value = String(preferences.depth);
+  try {
+    localStorage.setItem(
+      'speckub-reader-navigation',
+      JSON.stringify(preferences),
+    );
+  } catch {
+    /* Optional persistence. */
+  }
+  list(true);
+}
 const collapsedPaths = new Set();
 let treeFiltered = false;
 function pathTree(endpoints) {
@@ -74,7 +109,34 @@ function pathTree(endpoints) {
   }
   return root;
 }
+function branchEndpoints(branch) {
+  const endpoints = [];
+  const pending = [branch];
+  while (pending.length) {
+    const current = pending.pop();
+    endpoints.push(...current.endpoints);
+    pending.push(...current.children.values());
+  }
+  return endpoints.sort(
+    (a, b) =>
+      a.path.localeCompare(b.path) ||
+      a.method.localeCompare(b.method) ||
+      a.id.localeCompare(b.id),
+  );
+}
+function navigationLabel(path, prefix = '') {
+  const relative = prefix ? path.slice(prefix.length) || '/' : path;
+  const segments = relative.slice(1).split('/');
+  if (segments.length <= 4) return relative;
+  const tail = segments.slice(-2).join('/');
+  return prefix
+    ? '…/' + tail
+    : '/' + segments.slice(0, 2).join('/') + '/…/' + tail;
+}
 function list(revealSelected = false) {
+  document.getElementById('tree-depth-setting').hidden =
+    preferences.view !== 'tree';
+  nav.dataset.view = preferences.view;
   if (!treeFiltered) {
     for (const group of nav.querySelectorAll('details[data-path]')) {
       if (group.open) collapsedPaths.delete(group.dataset.path);
@@ -91,26 +153,35 @@ function list(revealSelected = false) {
       (!query || e.search.includes(query)),
   );
   const selectedPath = data.endpoints.find((e) => e.id === selectedId)?.path;
-  function renderEndpoint(endpoint, container) {
+  function renderEndpoint(endpoint, container, prefix = '') {
     const link = node('a', undefined, 'endpoint-link');
     link.href = '#' + encodeURIComponent(endpoint.id);
     if (selectedId === endpoint.id) link.setAttribute('aria-current', 'page');
     const row = node('span', undefined, 'endpoint-row');
     row.append(
       methodBadge(endpoint.method),
-      node('span', endpoint.path, 'nav-route'),
+      node('span', navigationLabel(endpoint.path, prefix), 'nav-route'),
     );
     link.append(row, node('span', endpoint.summary, 'nav-summary'));
     link.title = endpoint.method + ' ' + endpoint.path;
+    link.setAttribute(
+      'aria-label',
+      endpoint.method + ' ' + endpoint.path + ' ' + endpoint.summary,
+    );
     container.append(link);
   }
-  function renderBranch(branch, container) {
+  function renderBranch(branch, container, level = 0) {
+    if (level >= preferences.depth) {
+      for (const endpoint of branchEndpoints(branch))
+        renderEndpoint(endpoint, container, branch.path);
+      return;
+    }
     for (const endpoint of branch.endpoints)
-      renderEndpoint(endpoint, container);
+      renderEndpoint(endpoint, container, branch.path);
     for (const child of branch.children.values()) {
       if (!child.children.size) {
         for (const endpoint of child.endpoints)
-          renderEndpoint(endpoint, container);
+          renderEndpoint(endpoint, container, branch.path);
         continue;
       }
       if (
@@ -122,6 +193,7 @@ function list(revealSelected = false) {
       }
       const group = node('details', undefined, 'path-group');
       group.dataset.path = child.path;
+      group.dataset.depth = String(level + 1);
       group.open =
         Boolean(query || method.value) || !collapsedPaths.has(child.path);
       const label = node('summary', undefined, 'path-group-label');
@@ -131,12 +203,15 @@ function list(revealSelected = false) {
         node('span', child.count, 'path-count'),
       );
       const children = node('div', undefined, 'path-children');
-      renderBranch(child, children);
+      renderBranch(child, children, level + 1);
       group.append(label, children);
       container.append(group);
     }
   }
-  renderBranch(pathTree(matches), nav);
+  const tree = pathTree(matches);
+  if (preferences.view === 'tree') renderBranch(tree, nav);
+  else
+    for (const endpoint of branchEndpoints(tree)) renderEndpoint(endpoint, nav);
   document.getElementById('result-count').textContent = matches.length;
   document.getElementById('no-results').hidden = matches.length > 0;
 }
@@ -260,6 +335,8 @@ async function show() {
     }
   }
 }
+navigationView.addEventListener('change', updateNavigation);
+treeDepth.addEventListener('change', updateNavigation);
 search.addEventListener('input', () => list());
 method.addEventListener('change', () => list());
 window.addEventListener('hashchange', show);
