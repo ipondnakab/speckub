@@ -232,6 +232,13 @@ frontmatter fields. Store templates/examples with `speckub: false`; create uses
 are preserved and remain usable—the agent adds the marker to generated specs.
 Initialization does not execute templates or generate API documents.
 
+The default template includes a JSON request example. Create fills it with
+synthetic values matching the endpoint's fields, nested types, and validation
+rules, and documents server defaults separately. Endpoints with no body say
+`No request body`; non-JSON endpoints show their actual encoding. Existing custom
+templates are preserved by init; use `$speckub-template Add JSON request examples
+and explain actual defaults` to update your project's layout.
+
 Detailed specs cover requests, responses, authentication, errors, business rules,
 relationships, source-backed Mermaid sequence diagrams, examples, limits, evidence,
 and uncertainties. The agent reviews completeness; the CLI does not enforce every

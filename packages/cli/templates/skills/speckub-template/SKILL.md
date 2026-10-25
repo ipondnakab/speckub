@@ -46,7 +46,11 @@ Prefer a compact template for simple endpoints and rich field/error tables for
 complex APIs. Keep evidence, explicit unknowns, and verification distinctions even
 when headings are renamed or merged. Include source-backed relationship and
 sequence guidance when relevant; a template must not prescribe nonexistent auth,
-services, retry rules, response shapes, or deployment guarantees.
+services, retry rules, response shapes, or deployment guarantees. Include a JSON
+request example slot for endpoints that accept JSON, with guidance to replace
+sample values from the contract and distinguish actual defaults. Preserve the
+no-body and non-JSON alternatives in the API document standard; do not require
+JSON for every endpoint.
 
 ## Maintain the example and review
 

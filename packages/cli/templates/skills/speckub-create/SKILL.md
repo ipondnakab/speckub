@@ -80,7 +80,10 @@ Quote YAML strings as needed. Do not add unsupported schema fields in frontmatte
 put request/response details in the Markdown body.
 
 Document observed authentication, headers, path/query parameters, body validation,
-responses, status codes, limits, and side effects. Use synthetic examples. Label
+responses, status codes, limits, and side effects. Include a fenced JSON request
+example when the endpoint accepts JSON, using the field/default and encoding
+rules in [the API document standard](references/api-document.md). Use synthetic
+examples. Label
 inferences, missing details, and intended behavior separately from implemented
 behavior. Do not read secret environment files or include credentials.
 
