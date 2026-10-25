@@ -1,7 +1,7 @@
 {
   "name": "@speckub/core",
   "description": "Discover Markdown API specs across a repository and check contracts, duplicate IDs, and source references for tools and CI.",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "type": "module",
   "exports": {
     ".": "./dist/index.js"

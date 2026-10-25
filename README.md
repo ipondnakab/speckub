@@ -14,14 +14,14 @@ Requires Node.js 22 or newer to run the CLI. The target project can use another
 language; SpecKub does not require adding JavaScript application code.
 
 ```sh
-npm install --save-dev @speckub/cli@0.1.3
+npm install --save-dev @speckub/cli@0.1.4
 npx speckub init --agent codex
 ```
 
 For Yarn projects:
 
 ```sh
-yarn add --dev @speckub/cli@0.1.3 --registry https://registry.npmjs.org
+yarn add --dev @speckub/cli@0.1.4 --registry https://registry.npmjs.org
 yarn speckub init --agent codex
 ```
 

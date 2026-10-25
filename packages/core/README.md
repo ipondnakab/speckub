@@ -16,7 +16,7 @@ Install [@speckub/cli](https://www.npmjs.com/package/@speckub/cli), which includ
 core and schema. Requires Node.js 22+:
 
 ```sh
-npm install --save-dev @speckub/cli@0.1.3
+npm install --save-dev @speckub/cli@0.1.4
 npx speckub init --agent codex
 ```
 
@@ -57,7 +57,7 @@ provide an executable by itself; use the CLI for terminal commands.
 ## Install and use programmatically
 
 ```sh
-npm install @speckub/core@0.1.3
+npm install @speckub/core@0.1.4
 ```
 
 Run this as an ES module in a repository containing SpecKub docs:

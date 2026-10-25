@@ -11,7 +11,7 @@ for package in schema core cli; do
 done
 
 for package in schema core cli; do
-  archive="packages/$package/speckub-$package-0.1.3.tgz"
+  archive="packages/$package/speckub-$package-0.1.4.tgz"
   test -f "$archive"
   contents=$(tar -tzf "$archive")
   grep -Fxq 'package/package.json' <<< "$contents"
@@ -23,7 +23,7 @@ for package in schema core cli; do
   }
 done
 
-cli_archive="packages/cli/speckub-cli-0.1.3.tgz"
+cli_archive="packages/cli/speckub-cli-0.1.4.tgz"
 cli_contents=$(tar -tzf "$cli_archive")
 grep -Fxq 'package/dist/bin.js' <<< "$cli_contents"
 grep -Fxq 'package/dist/init.js' <<< "$cli_contents"

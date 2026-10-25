@@ -20,7 +20,7 @@ separate documentation service.”
 1. **Initialize in your terminal** (Node.js 22+):
 
    ```sh
-   npm install --save-dev @speckub/cli@0.1.3
+   npm install --save-dev @speckub/cli@0.1.4
    npx speckub init --agent codex
    ```
 
@@ -126,7 +126,7 @@ Authentication behavior has not been established in this illustrative example.
 Requires Node.js 22 or newer:
 
 ```sh
-npm install @speckub/schema@0.1.3
+npm install @speckub/schema@0.1.4
 ```
 
 Use an ES module (for example, `check-spec.mjs`):

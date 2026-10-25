@@ -2,30 +2,22 @@
 
 ## Current registry state
 
-Verified against the public npm registry on 2026-10-25:
+Version `0.1.3` is the last verified public release of schema, core, and CLI.
+Version `0.1.4` is a candidate until publication and registry verification finish.
+Never republish an accepted version.
 
-| Package           | Latest published version | Role                                                    |
-| ----------------- | ------------------------ | ------------------------------------------------------- |
-| `@speckub/schema` | `0.1.2`                  | HTTP schemas and Markdown-frontmatter parsing           |
-| `@speckub/core`   | `0.1.2`                  | Deterministic discovery and source-reference validation |
-| `@speckub/cli`    | `0.1.2`                  | Agent workflows, CLI checks, and standalone spec reader |
+## Candidate 0.1.4
 
-All three packages are publicly available with the `latest` tag at `0.1.2`.
-Do not republish `0.1.0`, `0.1.1`, or `0.1.2`. Versions already used on npm cannot be reused. See
-[npm publish](https://docs.npmjs.com/cli/v11/commands/npm-publish/).
+The maintainer approved publicly publishing `@speckub/schema`, `@speckub/core`,
+and `@speckub/cli` version `0.1.4`. This release includes the merged CLI reader
+list/tree navigation, configurable tree layers, transparent logo and favicon,
+dropdown spacing, and JSON request template improvements. The separate
+`speckub-web` application is deployed independently and is not an npm package.
 
-## Candidate 0.1.3
-
-The maintainer approved publishing schema, core, and CLI version `0.1.3` after
-updating the npm-facing documentation. The candidate adds repository-wide spec
-discovery, explicit `speckub` markers, legacy compatibility, custom-template
-coverage, and detailed npm use cases and getting-started stories.
-
-Source manifests, archive checks, and the workflow confirmation use `0.1.3`.
-Publish after the maintainer reviews/merges the release PR and checks pass. Do not
-merge automatically. Publication approval is already recorded; browser/2FA may
-still require the maintainer. Until registry verification succeeds, `0.1.2` remains
-the latest published release. The public GitHub-URL reader is still planned.
+Manifests, archive checks, and the workflow confirmation use `0.1.4`.
+Review and merge the release PR before publishing; do not merge automatically.
+Publication approval is recorded, but npm browser authentication may still be
+required. Regenerate existing reader exports after upgrading.
 
 ## Released 0.1.2
 
@@ -43,7 +35,7 @@ The maintainer explicitly requested a version bump and public npm publication.
 Publication used the existing maintainer login and inspected local archives;
 it did not trigger the production Actions workflow or merge a pull request.
 PR #16 has since been merged into `main`. The next candidate uses the
-`publish-0.1.3` gate; no production workflow has been dispatched for this candidate.
+`publish-0.1.4` gate; no production workflow has been dispatched for this candidate.
 
 Changing a local README or `description` does not update the npm page. The reviewed
 README and metadata must be included in a new approved package publication. Do not
@@ -77,7 +69,7 @@ pnpm build
 bash .github/scripts/verify-packages.sh
 ```
 
-The script generates candidate archives labeled `0.1.3`. The workflow uses those same
+The script generates candidate archives labeled `0.1.4`. The workflow uses those same
 archive names. Publish only the exact inspected archives after approval, and
 never replace a package version already accepted by npm.
 

@@ -33,14 +33,14 @@ your chosen coding agent's access and usage requirements still apply.
 Run in the API project's root:
 
 ```sh
-npm install --save-dev @speckub/cli@0.1.3
+npm install --save-dev @speckub/cli@0.1.4
 npx speckub init --agent codex
 ```
 
 This installs skills and an editable template. Existing project files are preserved.
 Use `--agent claude`, `--agent cursor`, or `--agent all` for another integration.
 For a project without an npm manifest, you can instead install the CLI globally
-with `npm install --global @speckub/cli@0.1.3` and run `speckub init --agent codex`.
+with `npm install --global @speckub/cli@0.1.4` and run `speckub init --agent codex`.
 
 ### 2. Discover your API — agent chat
 
@@ -105,6 +105,17 @@ changes later, update its existing document and preserve its stable ID.
 | Repository-wide default spec discovery          | No      | No      | Yes     |
 | Explicit discovery markers and template opt-out | No      | No      | Yes     |
 
+## Reader improvements in 0.1.4
+
+The offline reader now defaults to a compact list. Switch to Tree and set the
+maximum visible layers (1–12) to browse deeply nested API routes without losing
+endpoints. Your view preferences are saved locally. Both the header logo and
+favicon use a transparent lightning cutout, and dropdown arrows have inset spacing.
+Newly initialized projects also receive JSON request examples in their editable
+API template. Existing custom templates are preserved.
+
+After upgrading, rerun `speckub ui` to regenerate existing reader exports.
+
 ## Repository-wide discovery in 0.1.3
 
 Version `0.1.3` discovers specs anywhere under `--root` for `ui`, `list`,
@@ -136,14 +147,14 @@ Requires Node.js 22 or newer. Your application can use another language; install
 the CLI does not require changing it to JavaScript. Run from the project root:
 
 ```sh
-npm install --save-dev @speckub/cli@0.1.3
+npm install --save-dev @speckub/cli@0.1.4
 npx speckub init --agent codex
 ```
 
 For Yarn projects:
 
 ```sh
-yarn add --dev @speckub/cli@0.1.3 --registry https://registry.npmjs.org
+yarn add --dev @speckub/cli@0.1.4 --registry https://registry.npmjs.org
 yarn speckub init --agent codex
 ```
 
@@ -153,14 +164,14 @@ does not install the CLI. `npm run @speckub` is not a package-execution command.
 For a global installation instead:
 
 ```sh
-npm install --global @speckub/cli@0.1.3
+npm install --global @speckub/cli@0.1.4
 speckub init --agent codex
 ```
 
 Or initialize without adding a project dependency:
 
 ```sh
-npx @speckub/cli@0.1.3 init --agent codex
+npx @speckub/cli@0.1.4 init --agent codex
 ```
 
 Choose `--agent claude`, `--agent cursor`, or `--agent all` for other integrations.
